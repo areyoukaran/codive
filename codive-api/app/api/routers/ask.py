@@ -81,7 +81,7 @@ async def ask(body: AskRequest, request: Request, user: User = Depends(get_curre
     if hasattr(result, "__await__"):
         result = await result
     if not result.allowed:
-        raise HTTPException(429, f"Slow down a little — try again in {result.retry_after_seconds}s", headers={"Retry-After": str(result.retry_after_seconds)})
+        raise HTTPException(429, f"Slow down a little - try again in {result.retry_after_seconds}s", headers={"Retry-After": str(result.retry_after_seconds)})
 
     if not body.question or not body.question.strip():
         raise HTTPException(400, "question is required")

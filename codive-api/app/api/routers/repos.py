@@ -16,7 +16,7 @@ router = APIRouter(prefix="/repos", tags=["repositories"])
 
 @router.get("/available")
 async def available_repos(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    """Repositories on GitHub the signed-in user can pick from — live call,
+    """Repositories on GitHub the signed-in user can pick from - live call,
     not stored, so it always reflects what's actually on their account."""
     token = await get_user_token(user, db)
     async with GitHubClient(token) as gh:
@@ -42,7 +42,7 @@ class SelectRepos(BaseModel):
 async def select_repos(body: SelectRepos, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     settings = get_settings()
     if len(body.full_names) > settings.max_repos_per_account:
-        raise HTTPException(400, f"Pick at most {settings.max_repos_per_account} repositories — fewer makes a sharper brief anyway")
+        raise HTTPException(400, f"Pick at most {settings.max_repos_per_account} repositories - fewer makes a sharper brief anyway")
 
     token = await get_user_token(user, db)
     created = []

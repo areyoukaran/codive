@@ -14,7 +14,7 @@ router = APIRouter(prefix="/sync", tags=["sync"])
 
 async def _sync_one_in_background(repo_id: str, token: str) -> None:
     """Runs after the HTTP response has already gone out, in its own DB
-    session — FastAPI's BackgroundTasks, which is what makes free-tier
+    session - FastAPI's BackgroundTasks, which is what makes free-tier
     hosting work without a second worker process the free plan doesn't
     give you."""
     factory = get_session_factory()
@@ -35,7 +35,7 @@ async def start_sync(
         select(Repository).where(Repository.owner_user_id == user.id, Repository.is_watched.is_(True))
     ))
     if not repos:
-        raise HTTPException(400, "No repositories selected yet — call /repos/select first")
+        raise HTTPException(400, "No repositories selected yet - call /repos/select first")
     for repo in repos:
         background.add_task(_sync_one_in_background, repo.id, token)
     return {"queued": [r.full_name for r in repos]}

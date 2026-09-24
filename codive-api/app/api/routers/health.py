@@ -15,7 +15,7 @@ _started_at = time.time()
 
 @router.get("/health")
 async def health():
-    """Always 200 if the process is up — for platform liveness checks.
+    """Always 200 if the process is up - for platform liveness checks.
     Lists missing configuration so a half-set-up deployment says why,
     instead of failing silently on the first real request."""
     settings = get_settings()
@@ -28,7 +28,7 @@ async def health():
 
 @router.get("/ready")
 async def ready():
-    """200 only if the database is actually reachable — for a load
+    """200 only if the database is actually reachable - for a load
     balancer or platform readiness probe, distinct from liveness."""
     settings = get_settings()
     if not settings.database_url:

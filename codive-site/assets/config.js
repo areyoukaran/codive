@@ -1,4 +1,4 @@
-/* Codive — front-end configuration.
+/* Codive - front-end configuration.
  *
  * Leave apiBase as null and the whole site runs on sample data: nothing
  * to set up, no account needed, every screen works. This is the demo.
@@ -12,7 +12,7 @@
  *     health signals, and "Ask Codive" answers from that real data
  *
  * If someone opens the site without being signed in, live mode falls back
- * to the demo data automatically — nothing breaks, they just see the demo
+ * to the demo data automatically - nothing breaks, they just see the demo
  * until they connect their own account from the landing page.
  *
  * Local dev:   apiBase: "http://localhost:8000"

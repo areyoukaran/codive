@@ -25,7 +25,7 @@ def _template_lede(counters: dict, top_item: dict | None) -> str:
     if counters["ci_failures"]:
         parts.append(f"{counters['ci_failures']} workflow{'s are' if counters['ci_failures'] != 1 else ' is'} failing on main")
     if not parts:
-        return "Nothing urgent since your last visit — a quiet morning."
+        return "Nothing urgent since your last visit - a quiet morning."
     lede = "Since you last looked: " + ", and ".join(parts) + "."
     if top_item:
         lede += f" Start with {top_item.get('repo', '')}#{top_item.get('number', '')}."
@@ -34,7 +34,7 @@ def _template_lede(counters: dict, top_item: dict | None) -> str:
 
 async def generate_lede(*, counters: dict, top_items: list[dict]) -> tuple[str, str]:
     """Returns (lede_text, generated_by). Falls back to the template lede on
-    any provider error — a brief must never fail to render."""
+    any provider error - a brief must never fail to render."""
     provider = get_llm_provider()
     if isinstance(provider, TemplateProvider):
         return _template_lede(counters, top_items[0] if top_items else None), "template"

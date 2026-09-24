@@ -4,20 +4,20 @@
 /* ============================ DATA ============================ */
 let ME = "rkulkarni";
 const REPOS = [
-  {id:"atlas/api", lang:"Python", color:"#3572A5", vis:"private", branch:"main", desc:"FastAPI service behind the Atlas dashboard — auth, sync and the public API.", stars:184, forks:21, prs:5, issues:23, ci:"failing", synced:"2 min ago", release:"v2.14.0 · 6 days ago", contributors:9},
+  {id:"atlas/api", lang:"Python", color:"#3572A5", vis:"private", branch:"main", desc:"FastAPI service behind the Atlas dashboard - auth, sync and the public API.", stars:184, forks:21, prs:5, issues:23, ci:"failing", synced:"2 min ago", release:"v2.14.0 · 6 days ago", contributors:9},
   {id:"atlas/web", lang:"TypeScript", color:"#3178C6", vis:"private", branch:"main", desc:"React front end. Talks to atlas/api over the v2 API.", stars:96, forks:8, prs:3, issues:11, ci:"passing", synced:"2 min ago", release:"v2.14.0 · 6 days ago", contributors:6},
   {id:"atlas/workers", lang:"Python", color:"#3572A5", vis:"private", branch:"main", desc:"Background sync, indexing and embedding jobs. Celery + Redis.", stars:41, forks:3, prs:2, issues:8, ci:"passing", synced:"4 min ago", release:"v0.9.3 · 3 weeks ago", contributors:4},
-  {id:"atlas/infra", lang:"HCL", color:"#7B42BC", vis:"private", branch:"main", desc:"Terraform for staging and production. RDS, ElastiCache, ECS.", stars:12, forks:1, prs:1, issues:4, ci:"passing", synced:"11 min ago", release:"—", contributors:3}
+  {id:"atlas/infra", lang:"HCL", color:"#7B42BC", vis:"private", branch:"main", desc:"Terraform for staging and production. RDS, ElastiCache, ECS.", stars:12, forks:1, prs:1, issues:4, ci:"passing", synced:"11 min ago", release:"-", contributors:3}
 ];
 
 const PRS = [
   {n:412, repo:"atlas/api", title:"Replace session cookies with rotating refresh tokens", author:"dpark", state:"open", age:"3 days", opened:"16 Sep", files:24, add:1204, del:689, ci:"passing", reviews:"1 approved · 1 changes requested", branch:"auth/rotating-tokens", waiting:true, draft:false,
    linked:[287], labels:["auth","breaking"],
    summary:"Swaps server-side session cookies for short-lived access tokens plus a rotating refresh token stored in an httpOnly cookie. Adds a token family table so a reused refresh token invalidates the whole family, and moves logout to a revocation list in Redis. Front-end changes are in atlas/web#188, which is not merged yet.",
-   changed:["app/auth/tokens.py — new, rotation and family tracking","app/auth/service.py — login, logout, refresh","app/models/token_family.py — new table","app/api/deps.py — bearer parsing replaces cookie session","alembic/versions/9f21_token_families.py","tests/auth/ — 11 new tests"],
+   changed:["app/auth/tokens.py - new, rotation and family tracking","app/auth/service.py - login, logout, refresh","app/models/token_family.py - new table","app/api/deps.py - bearer parsing replaces cookie session","alembic/versions/9f21_token_families.py","tests/auth/ - 11 new tests"],
    findings:[
      {sev:"high", t:"Concurrent refresh can revoke a valid session", loc:"app/auth/tokens.py:88", conf:.82,
-      body:"Two requests refreshing the same token at once both read the family as active, then both write a new head. The second write marks the first successor as reused, which trips the reuse detector and revokes the family — a user with two tabs open gets logged out.",
+      body:"Two requests refreshing the same token at once both read the family as active, then both write a new head. The second write marks the first successor as reused, which trips the reuse detector and revokes the family - a user with two tabs open gets logged out.",
       code:"  84  family = await repo.get_family(token.family_id)\n  85  if family.revoked:\n  86      raise TokenReuse()\n  87\n  88  new = await repo.rotate(family, token)   ← no lock between read and write\n  89  await repo.mark_used(token)",
       fix:"Take a row lock on the family (SELECT … FOR UPDATE) or key a short Redis lease on family_id for the read-rotate-write window."},
      {sev:"high", t:"Password change does not revoke existing token families", loc:"app/auth/service.py:203", conf:.74,
@@ -32,12 +32,12 @@ const PRS = [
       body:"downgrade() is left as pass. Every other migration in the repository implements it, and the deploy runbook assumes a rollback path exists.",
       code:"  44  def downgrade():\n  45      pass",
       fix:"Drop the token_families table and restore the sessions index."}],
-   checklist:["Rotation is covered by a concurrency test, not just a happy-path test","Revocation runs on password change, email change and admin disable","atlas/web#188 ships in the same release or the API accepts both schemes","Rollback path verified against a staging snapshot","30-day refresh lifetime signed off — it was 7 days with sessions"],
-   timeline:[["16 Sep 09:14","dpark opened the pull request"],["16 Sep 11:02","CI passed on 3 checks"],["17 Sep 14:40","mchen requested changes — “token lifetime needs a second pair of eyes”"],["18 Sep 08:21","dpark pushed 4 commits"],["18 Sep 16:55","jlee approved"],["19 Sep 07:30","rkulkarni requested as reviewer"]]},
+   checklist:["Rotation is covered by a concurrency test, not just a happy-path test","Revocation runs on password change, email change and admin disable","atlas/web#188 ships in the same release or the API accepts both schemes","Rollback path verified against a staging snapshot","30-day refresh lifetime signed off - it was 7 days with sessions"],
+   timeline:[["16 Sep 09:14","dpark opened the pull request"],["16 Sep 11:02","CI passed on 3 checks"],["17 Sep 14:40","mchen requested changes - “token lifetime needs a second pair of eyes”"],["18 Sep 08:21","dpark pushed 4 commits"],["18 Sep 16:55","jlee approved"],["19 Sep 07:30","rkulkarni requested as reviewer"]]},
 
   {n:418, repo:"atlas/api", title:"Bump httpx 0.25 → 0.27 and pin anyio", author:"dependabot", state:"open", age:"19 hours", opened:"18 Sep", files:2, add:8, del:8, ci:"failing", reviews:"no reviews", branch:"deps/httpx-027", waiting:true, draft:false,
    linked:[], labels:["dependencies"],
-   summary:"Routine dependency bump. CI has failed three times on the same test — tests/clients/test_timeouts.py::test_no_timeout — since the bump landed on the branch.",
+   summary:"Routine dependency bump. CI has failed three times on the same test - tests/clients/test_timeouts.py::test_no_timeout - since the bump landed on the branch.",
    changed:["pyproject.toml","poetry.lock"],
    findings:[
      {sev:"high", t:"timeout=None no longer means “no timeout”", loc:"app/clients/github.py:52", conf:.79,
@@ -45,7 +45,7 @@ const PRS = [
       code:"  52  self._c = httpx.AsyncClient(timeout=None)   ← now inherits a 5s default\n  53  # initial sync of a 10k-commit repo takes minutes",
       fix:"Pass an explicit httpx.Timeout(connect=5, read=300, write=30, pool=5) for sync clients and keep the short default everywhere else."}],
    checklist:["Timeouts set explicitly per client, not globally disabled","Initial sync re-run against a large repository","Changelog for 0.26 and 0.27 read for other behaviour changes"],
-   timeline:[["18 Sep 12:04","dependabot opened the pull request"],["18 Sep 12:22","CI failed — test_timeouts"],["18 Sep 22:10","CI failed — test_timeouts"],["19 Sep 06:48","CI failed — test_timeouts"]]},
+   timeline:[["18 Sep 12:04","dependabot opened the pull request"],["18 Sep 12:22","CI failed - test_timeouts"],["18 Sep 22:10","CI failed - test_timeouts"],["19 Sep 06:48","CI failed - test_timeouts"]]},
 
   {n:401, repo:"atlas/api", title:"Add pgvector HNSW index for code_chunks", author:"mchen", state:"open", age:"16 days", opened:"3 Sep", files:6, add:212, del:34, ci:"passing", reviews:"awaiting review from rkulkarni", branch:"search/hnsw-index", waiting:true, draft:false, stale:true,
    linked:[], labels:["search","performance"],
@@ -57,7 +57,7 @@ const PRS = [
       code:"  18  op.execute(\"CREATE INDEX idx_chunks_hnsw ON code_chunks …\")",
       fix:"Use CONCURRENTLY outside a transaction, and gate the migration behind a maintenance window flag."}],
    checklist:["Benchmark numbers included in the description","Index build strategy agreed for production","Old IVFFlat index dropped in a follow-up, not this one"],
-   timeline:[["3 Sep 16:30","mchen opened the pull request"],["4 Sep 10:12","CI passed"],["6 Sep 09:40","mchen commented — “benchmarks in the description now”"],["19 Sep","no activity for 13 days"]]},
+   timeline:[["3 Sep 16:30","mchen opened the pull request"],["4 Sep 10:12","CI passed"],["6 Sep 09:40","mchen commented - “benchmarks in the description now”"],["19 Sep","no activity for 13 days"]]},
 
   {n:419, repo:"atlas/workers", title:"Stop the retry storm when GitHub returns 403", author:"jlee", state:"merged", age:"merged yesterday", opened:"17 Sep", files:5, add:97, del:41, ci:"passing", reviews:"2 approved", branch:"fix/retry-storm", waiting:false, draft:false,
    linked:[244], labels:["reliability"],
@@ -89,26 +89,26 @@ const PRS = [
 
 const ISSUES = [
   {n:287, repo:"atlas/api", title:"Initial sync stalls on repositories with more than 10k commits", state:"open", author:"mchen", age:"12 days", comments:41, labels:["bug","sync","P1"], assignee:"rkulkarni", hot:true, blocked:true,
-   summary:"Initial sync reliably stalls somewhere past 10,000 commits. The thread has narrowed it to a single worker holding one connection for the whole walk, so the job neither finishes nor fails — it just stops making progress while the connection sits idle.",
-   decisions:["Paginate by commit date, not by page number — page numbers drift as new commits land mid-sync","Checkpoint every 500 commits so a restart resumes instead of starting over","Full history is not required for the first brief; the last 90 days is enough to be useful"],
-   open:["Do we backfill older history lazily, or leave it out until someone asks for it?","Who owns the cursor format — this issue or #412's follow-up?"],
-   activity:[["7 Sep","mchen opened the issue with a stack trace from staging"],["9 Sep","jlee reproduced it on a 34k-commit repository"],["12 Sep","thread agrees on date-based pagination"],["15 Sep","dpark posts a checkpointing sketch"],["17 Sep","blocked — waiting on a decision about backfill"]]},
-  {n:244, repo:"atlas/api", title:"Rate-limit handling drops webhook events silently", state:"open", author:"jlee", age:"22 days", comments:6, labels:["bug","reliability"], assignee:"—", stale:true,
+   summary:"Initial sync reliably stalls somewhere past 10,000 commits. The thread has narrowed it to a single worker holding one connection for the whole walk, so the job neither finishes nor fails - it just stops making progress while the connection sits idle.",
+   decisions:["Paginate by commit date, not by page number - page numbers drift as new commits land mid-sync","Checkpoint every 500 commits so a restart resumes instead of starting over","Full history is not required for the first brief; the last 90 days is enough to be useful"],
+   open:["Do we backfill older history lazily, or leave it out until someone asks for it?","Who owns the cursor format - this issue or #412's follow-up?"],
+   activity:[["7 Sep","mchen opened the issue with a stack trace from staging"],["9 Sep","jlee reproduced it on a 34k-commit repository"],["12 Sep","thread agrees on date-based pagination"],["15 Sep","dpark posts a checkpointing sketch"],["17 Sep","blocked - waiting on a decision about backfill"]]},
+  {n:244, repo:"atlas/api", title:"Rate-limit handling drops webhook events silently", state:"open", author:"jlee", age:"22 days", comments:6, labels:["bug","reliability"], assignee:"-", stale:true,
    summary:"When the client hits a secondary rate limit, the event handler catches the exception, logs at debug level and returns 200. GitHub sees a success and never redelivers, so the event is gone.",
    decisions:["Return 503 so GitHub retries the delivery","Log rate-limit hits at warning, not debug"],
    open:["Is there a backlog of already-lost events worth replaying?"],
-   activity:[["28 Aug","jlee opened the issue"],["29 Aug","mchen linked it to the retry work in atlas/workers"],["18 Sep","partly addressed by atlas/workers#419 — the webhook path is still open"]]},
+   activity:[["28 Aug","jlee opened the issue"],["29 Aug","mchen linked it to the retry work in atlas/workers"],["18 Sep","partly addressed by atlas/workers#419 - the webhook path is still open"]]},
   {n:301, repo:"atlas/api", title:"Webhook signature verification fails on redelivery", state:"open", author:"dpark", age:"4 days", comments:9, labels:["security","webhooks"], assignee:"dpark",
-   summary:"Redelivered webhooks arrive with the original timestamp. The verifier rejects anything older than five minutes, so a redelivery after a brief outage is dropped as a replay attempt — which defeats the point of redelivery.",
+   summary:"Redelivered webhooks arrive with the original timestamp. The verifier rejects anything older than five minutes, so a redelivery after a brief outage is dropped as a replay attempt - which defeats the point of redelivery.",
    decisions:["Keep the replay window, but key deduplication on the delivery id instead of the timestamp"],
-   open:["What window do we accept for redeliveries — 24 hours?"],
+   open:["What window do we accept for redeliveries - 24 hours?"],
    activity:[["15 Sep","dpark opened the issue after a staging outage"],["16 Sep","mchen confirms the same behaviour in production logs"],["18 Sep","dpark proposes delivery-id deduplication"]]},
-  {n:265, repo:"atlas/web", title:"Dashboard flashes empty state while the first sync runs", state:"open", author:"rkulkarni", age:"9 days", comments:3, labels:["ux"], assignee:"—",
+  {n:265, repo:"atlas/web", title:"Dashboard flashes empty state while the first sync runs", state:"open", author:"rkulkarni", age:"9 days", comments:3, labels:["ux"], assignee:"-",
    summary:"During the first sync the dashboard renders the empty state for about a second before data arrives, which reads as “nothing here” at exactly the moment a new user is deciding whether the product works.",
    decisions:["Show sync progress instead of the empty state until the first sync completes"],
    open:["Do we hold the whole dashboard, or fill sections as each finishes?"],
    activity:[["10 Sep","rkulkarni opened the issue"],["11 Sep","dpark suggests per-section progress"]]},
-  {n:198, repo:"atlas/workers", title:"Embedding job retries the whole batch when one chunk fails", state:"open", author:"mchen", age:"34 days", comments:2, labels:["performance"], assignee:"—", stale:true,
+  {n:198, repo:"atlas/workers", title:"Embedding job retries the whole batch when one chunk fails", state:"open", author:"mchen", age:"34 days", comments:2, labels:["performance"], assignee:"-", stale:true,
    summary:"One oversized chunk fails the embedding call and the entire batch of 256 is retried, including the 255 chunks that embedded fine. On a large repository this triples the indexing cost.",
    decisions:[],
    open:["Split on failure, or validate chunk size before the call?"],
@@ -129,8 +129,8 @@ const COMMITS = [
 
 const CI = [
   {repo:"atlas/api", wf:"api-ci", branch:"main", state:"failing", when:"41 minutes ago", job:"pytest · tests/clients/test_timeouts.py::test_no_timeout", run:"#2841", streak:3},
-  {repo:"atlas/web", wf:"web-ci", branch:"main", state:"passing", when:"2 hours ago", job:"—", run:"#1907", streak:0},
-  {repo:"atlas/workers", wf:"workers-ci", branch:"main", state:"passing", when:"yesterday", job:"—", run:"#612", streak:0}
+  {repo:"atlas/web", wf:"web-ci", branch:"main", state:"passing", when:"2 hours ago", job:"-", run:"#1907", streak:0},
+  {repo:"atlas/workers", wf:"workers-ci", branch:"main", state:"passing", when:"yesterday", job:"-", run:"#612", streak:0}
 ];
 
 const SIGNALS = [
@@ -169,7 +169,7 @@ const BRIEF = {
   date:"Saturday, 19 September",
   since:"since you last looked, Thursday 17:40",
   lede:[
-    "The auth rewrite is nearly through — ",
+    "The auth rewrite is nearly through - ",
     {hl:"two pull requests are waiting on you"},
     ", and atlas/api has failed CI three times on the same test since yesterday's httpx bump. Nothing else moved much."
   ]
@@ -191,7 +191,7 @@ const BRIEF = {
 })();
 
 /* ============================ LIVE DATA ============================
-   Demo mode (default, zero config) never reaches any of this — every
+   Demo mode (default, zero config) never reaches any of this - every
    function below is only called from boot() at the bottom of the file,
    and only once backendConfigured() is true. The sample arrays above
    stay exactly as they are; this section mutates them IN PLACE (via
@@ -232,7 +232,7 @@ function relativeShort(iso){
 
 /* Maps one backend PR record (see app/api/routers/activity.py:_pr_out) to
    the shape prRow()/vPR() already know how to render. Fields the backend
-   hasn't populated yet (AI findings/checklist/timeline — see the API
+   hasn't populated yet (AI findings/checklist/timeline - see the API
    README's "what Phase 4-5 still needs") come through as empty arrays,
    which the existing empty-state UI already handles correctly. */
 function adaptPR(p){
@@ -254,7 +254,7 @@ function adaptIssue(i){
   return {
     n: i.n, repo: i.repo, title: i.title, state: i.state, author: i.author || "unknown",
     age: relativeDay(i.opened_at), comments: i.comments, labels: i.labels || [],
-    assignee: i.assignee || "—", hot: i.comments >= 25, blocked: (i.open || []).length > 0,
+    assignee: i.assignee || "-", hot: i.comments >= 25, blocked: (i.open || []).length > 0,
     stale: i.state === "open" && ageDays >= 21,  // mirrors STALE_ISSUE_DAYS in the backend's health_signals.py
     summary: i.summary || "Codive hasn't summarized this thread yet.",
     decisions: i.decisions || [], open: i.open || [], activity: [],
@@ -271,10 +271,10 @@ function adaptCI(c){
 function adaptRepo(r){
   const known = REPOS.find(x => x.id === r.full_name) || {};
   return {
-    id: r.full_name, lang: r.language || "—", color: known.color || "#8B938B",
+    id: r.full_name, lang: r.language || "-", color: known.color || "#8B938B",
     vis: r.visibility, branch: r.default_branch, desc: r.description || "No description yet.",
     stars: r.stars, forks: r.forks, ci: "passing", synced: r.last_synced_at ? relativeShort(r.last_synced_at) : "never",
-    release: r.latest_release || "—", contributors: known.contributors || 0,
+    release: r.latest_release || "-", contributors: known.contributors || 0,
   };
 }
 function adaptSignal(s){
@@ -288,7 +288,7 @@ async function tryLoadLiveData(){
   if(!backendConfigured()) return false;
   let me;
   try{ me = await apiGet("/auth/me"); }
-  catch(e){ return false; }  // not signed in — demo data stands, index.html's Connect GitHub button is the way in
+  catch(e){ return false; }  // not signed in - demo data stands, index.html's Connect GitHub button is the way in
 
   let repos;
   try{ repos = await apiGet("/repos"); }
@@ -311,7 +311,7 @@ async function tryLoadLiveData(){
   COMMITS.length = 0; COMMITS.push(...commits.map(adaptCommit));
   CI.length = 0; CI.push(...ci.map(adaptCI));
   SIGNALS.length = 0; SIGNALS.push(...signals.map(adaptSignal));
-  FILES.length = 0;  // README/docs indexing has no stable "file browser" shape yet — search still works over synced PRs/issues/commits
+  FILES.length = 0;  // README/docs indexing has no stable "file browser" shape yet - search still works over synced PRs/issues/commits
 
   IS_LIVE = true;
   ME = me.login;
@@ -322,7 +322,7 @@ async function tryLoadLiveData(){
     BRIEF.since = brief.generated_by === "template" ? "computed from synced data" : "written by " + brief.generated_by;
     BRIEF.lede = [brief.lede];
     BRIEF.counters = brief.counters;
-  }catch(e){ /* brief is best-effort — the rest of the dashboard still renders */ }
+  }catch(e){ /* brief is best-effort - the rest of the dashboard still renders */ }
 
   return true;
 }
@@ -474,7 +474,7 @@ function vOverview(p){
   brief.appendChild(lede);
 
   // Every number below is computed straight from PRS/ISSUES/CI at render
-  // time — in both demo and live mode. This used to be a hand-authored
+  // time - in both demo and live mode. This used to be a hand-authored
   // set of numbers that matched only the demo dataset, which meant live
   // mode would render the demo's fake counts on top of a user's real
   // repositories. Computing it generically fixes that, and demo mode
@@ -503,7 +503,7 @@ function vOverview(p){
   rew.addEventListener("click", ()=>rewriteBrief(para, rew));
 
   /* --- needs you: worst-first from real PR/issue state, same logic for
-     demo and live data. No hardcoded PR numbers or names here anymore —
+     demo and live data. No hardcoded PR numbers or names here anymore -
      see the note above the counters. */
   const needsPRs = [];
   const seenPR = new Set();
@@ -704,7 +704,7 @@ function vActivity(p){
   if(actFilter.type==="all"||actFilter.type==="issue")
     ISSUES.filter(i=>inScope(i.repo)).forEach(i=>items.push({kind:"issue", author:i.author, node:issueRow(i)}));
   if(actFilter.type==="all"||actFilter.type==="ci")
-    CI.filter(c=>inScope(c.repo)).forEach(c=>items.push({kind:"ci", author:"—", node:ciRow(c)}));
+    CI.filter(c=>inScope(c.repo)).forEach(c=>items.push({kind:"ci", author:"-", node:ciRow(c)}));
 
   const shown = items.filter(i=>actFilter.author==="all" || i.author===actFilter.author);
   const s = sec("Timeline", shown.length+" events");
@@ -736,7 +736,7 @@ function vActivity(p){
 /* ============================ PULL REQUESTS ============================ */
 let prFilter = "needs";
 function vPRs(p){
-  p.appendChild(pageHead("Pull requests","Aged, ranked and reviewed — not just mirrored"));
+  p.appendChild(pageHead("Pull requests","Aged, ranked and reviewed - not just mirrored"));
   const f = el("div","filters");
   [["needs","Needs attention"],["open","Open"],["mine","Opened by me"],["all","Everything"]].forEach(([v,l])=>{
     const c = el("button","chip",l);
@@ -829,7 +829,7 @@ function vPR(p){
   const s2 = sec("Files affected", x.files+" files");
   const fl = el("div","ledger");
   x.changed.forEach(c=>{
-    const [path, note] = c.split(" — ");
+    const [path, note] = c.split(" - ");
     fl.appendChild(row("~","g-mute", b=>{
       const t2 = el("div","row-t mono"); t2.style.fontSize="12.8px"; t2.textContent = path;
       b.appendChild(t2);
@@ -950,7 +950,7 @@ function rerunReview(x, btn){
 /* ============================ ISSUES ============================ */
 let issueFilter = "all";
 function vIssues(p){
-  p.appendChild(pageHead("Issues","Ageing, stalling and unresolved discussion — surfaced, not just listed"));
+  p.appendChild(pageHead("Issues","Ageing, stalling and unresolved discussion - surfaced, not just listed"));
   const f = el("div","filters");
   [["all","All open"],["hot","Active discussion"],["stale","Stale"],["mine","Assigned to me"]].forEach(([v,l])=>{
     const c = el("button","chip",l);
@@ -977,7 +977,7 @@ function issueRow(i){
     if(i.stale) parts.push(tag("stale"));
     i.labels.forEach(l=>parts.push(tag(l)));
     b.appendChild(metaLine(parts));
-  }, i.assignee===ME ? "yours" : i.assignee==="—" ? "unassigned" : i.assignee, ()=>go({v:"issue",n:i.n}));
+  }, i.assignee===ME ? "yours" : i.assignee==="-" ? "unassigned" : i.assignee, ()=>go({v:"issue",n:i.n}));
 }
 
 function vIssue(p){
@@ -1066,7 +1066,7 @@ function signalRow(sig){
   const b = el("div","signal-b");
   const top = el("div"); top.style.cssText="display:flex;gap:12px;align-items:baseline;justify-content:space-between";
   top.appendChild(el("div","signal-t",sig.t));
-  top.appendChild(el("span","trend "+sig.trend, (sig.trend==="up"?"▲ ":sig.trend==="down"?"▼ ":"— ")+sig.trendTxt));
+  top.appendChild(el("span","trend "+sig.trend, (sig.trend==="up"?"▲ ":sig.trend==="down"?"▼ ":"- ")+sig.trendTxt));
   b.appendChild(top);
   const ul = el("ul","signal-e");
   sig.evidence.forEach(([k,v])=>{
@@ -1104,7 +1104,7 @@ function vHealth(p){
 
   const note = el("p");
   note.style.cssText = "margin-top:18px;font-size:12.6px;color:var(--ink3);max-width:66ch;line-height:1.6";
-  note.textContent = "Every signal here is counted from synchronized GitHub data, not inferred by a model. Codive only writes the suggested action — and you can disagree with it.";
+  note.textContent = "Every signal here is counted from synchronized GitHub data, not inferred by a model. Codive only writes the suggested action - and you can disagree with it.";
   p.appendChild(note);
 }
 function ciRow(c){
@@ -1172,7 +1172,7 @@ function renderCmdk(){
   if(!cmdkHits.length){
     const e = el("div","empty");
     e.appendChild(el("b",null,"No matches"));
-    e.appendChild(el("span",null, cmdkMode==="exact" ? "Try semantic search — it looks at meaning, not just the literal string." : "Nothing in the indexed repositories matches that."));
+    e.appendChild(el("span",null, cmdkMode==="exact" ? "Try semantic search - it looks at meaning, not just the literal string." : "Nothing in the indexed repositories matches that."));
     list.appendChild(e); return;
   }
   cmdkHits.forEach((h,idx)=>{
@@ -1191,7 +1191,7 @@ function closeCmdk(){ $("#cmdk").classList.remove("open"); }
 let sampleFn = null, sampleResolved = false, turns = [], askCtl = null;
 const CTX_RULES =
 "You are Codive, a repository intelligence assistant. Answer only from the repository state given below. "+
-"If the state does not contain the answer, say so plainly and name what you would need — never guess. "+
+"If the state does not contain the answer, say so plainly and name what you would need - never guess. "+
 "Be brief: 2-4 sentences or up to 4 short bullet lines. Plain prose, no markdown headings, no bold. "+
 "Cite every factual claim with an inline marker in square brackets, placed right after the claim: "+
 "[pr:412] for a pull request, [issue:287] for an issue, [commit:a91f3c2] for a commit, [file:app/auth/tokens.py:88] for a file, [repo:atlas/api] for a repository. "+
@@ -1239,7 +1239,7 @@ function backendAsk(q, body, log){
     if(r.status === 401){ var e = new Error("unauthenticated"); e.code = 401; throw e; }
     if(r.status === 429){ var e2 = new Error("rate_limited"); e2.code = 429; throw e2; }
     if(!r.ok){
-      // Reached the server, but it returned an error — surface what it
+      // Reached the server, but it returned an error - surface what it
       // actually said instead of collapsing every non-2xx into the same
       // "could not reach" message, which made a real 500/422/503 look
       // identical to a genuine network/CORS failure and impossible to
@@ -1254,17 +1254,17 @@ function backendAsk(q, body, log){
   })
   .then(function(d){ linkifyCitations(d.answer || d.text || "(empty response)", body); log.scrollTop = log.scrollHeight; })
   .catch(function(err){
-    if(err && err.code === 401){ body.textContent = "Signed out — reconnect GitHub to keep asking questions."; }
-    else if(err && err.code === 429){ body.textContent = "Slow down a little — try again in a few seconds."; }
+    if(err && err.code === 401){ body.textContent = "Signed out - reconnect GitHub to keep asking questions."; }
+    else if(err && err.code === 429){ body.textContent = "Slow down a little - try again in a few seconds."; }
     else if(err && err.code){ body.textContent = "Backend responded with " + err.code + ": " + (err.detail || "no further detail") + " (POST " + base + "/ask)"; }
-    else { body.textContent = "Could not reach " + base + "/ask at all — this is a network/CORS failure, not a server error. Check the backend is running and its CORS_ORIGINS includes " + location.origin + "."; }
+    else { body.textContent = "Could not reach " + base + "/ask at all - this is a network/CORS failure, not a server error. Check the backend is running and its CORS_ORIGINS includes " + location.origin + "."; }
     body.style.color = "var(--ink2)";
   });
 }
 function sampleMsg(code){
   switch(code){
     case "not_granted": case "sampling_disabled": case "not_declared": case "capability_disabled": return "Claude access is not available in this view.";
-    case "rate_limited": return "Too many requests just now — try again in a minute.";
+    case "rate_limited": return "Too many requests just now - try again in a minute.";
     case "session_expired": return "Sign in to Claude again to continue.";
     case "cancelled": return "Stopped.";
     case "refused": return "Claude declined to answer that one.";
@@ -1296,7 +1296,7 @@ function closeAsk(){
 function askEmpty(){
   const log = $("#askLog"); log.innerHTML = "";
   const e = el("div","ask-empty");
-  e.textContent = "Ask about anything Codive has synchronized — commits, pull requests, issues, workflow runs or indexed files. Answers point back at the source.";
+  e.textContent = "Ask about anything Codive has synchronized - commits, pull requests, issues, workflow runs or indexed files. Answers point back at the source.";
   log.appendChild(e);
   const sg = el("div","sugg");
   ["What changed in authentication this week?",
@@ -1343,9 +1343,9 @@ const CANNED = {
   "what could break if pr #412 ships today?":
     "Two things. Concurrent refreshes have no lock between reading and rotating a token family, so a user with two tabs can be logged out [file:app/auth/tokens.py:88]. And changing a password no longer revokes existing token families, so old tokens stay valid for 30 days [file:app/auth/service.py:203]. There is also a coupling risk: the API change needs the front-end client to ship with it [pr:188].",
   "why does ci keep failing on atlas/api?":
-    "The same test has failed three runs in a row — test_no_timeout, after the httpx bump [pr:418]. httpx 0.26 changed what timeout=None means, so the GitHub client that deliberately disabled timeouts for initial sync now inherits a short default [file:app/clients/github.py:52]. Setting an explicit long read timeout for the sync client fixes it.",
+    "The same test has failed three runs in a row - test_no_timeout, after the httpx bump [pr:418]. httpx 0.26 changed what timeout=None means, so the GitHub client that deliberately disabled timeouts for initial sync now inherits a short default [file:app/clients/github.py:52]. Setting an explicit long read timeout for the sync client fixes it.",
   "what is blocking issue #287?":
-    "One open question: whether older history is backfilled lazily or left out until someone asks [issue:287]. The thread already settled the rest — paginate by commit date, checkpoint every 500 commits, and treat 90 days as enough for a first useful brief. Your draft on sync cursors overlaps with it [pr:421].",
+    "One open question: whether older history is backfilled lazily or left out until someone asks [issue:287]. The thread already settled the rest - paginate by commit date, checkpoint every 500 commits, and treat 90 days as enough for a first useful brief. Your draft on sync cursors overlaps with it [pr:421].",
   "summarize the last 9 commits":
     "Most of the movement is auth: two commits on the rotating-token work [commit:a91f3c2], and the retry-storm fix that merged in workers [commit:c7e5a90]. One dependency bump is the source of the current CI failure [pr:418]. Your own sync-cursor sketch is the newest thing in the list [commit:6cc1904], and the oldest is the HNSW benchmark script from thirteen days ago [pr:401]."
 };
@@ -1387,7 +1387,7 @@ function askAsk(q){
     setTimeout(()=>{
       if(canned) linkifyCitations(canned, body);
       else {
-        body.textContent = "Live answers need Claude access in this view. The suggested questions still work — they run against the same synchronized repository state.";
+        body.textContent = "Live answers need Claude access in this view. The suggested questions still work - they run against the same synchronized repository state.";
         body.style.color = "var(--ink2)";
       }
       log.scrollTop = log.scrollHeight;
@@ -1489,7 +1489,7 @@ async function boot(){
       : backendConfigured() && IS_LIVE
         ? "Answers come from your synced data. Citations are clickable."
         : backendConfigured()
-          ? "Signed out — connect GitHub from the landing page for live answers."
+          ? "Signed out - connect GitHub from the landing page for live answers."
           : "Running on sample repository data. Point assets/config.js at your API for live answers.";
   });
 }

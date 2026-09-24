@@ -21,7 +21,7 @@ async def get_current_user(
     except ConfigurationError as exc:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
     if claims is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Session expired or invalid — sign in again")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Session expired or invalid - sign in again")
     user = await db.scalar(select(User).where(User.id == claims.user_id))
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Account no longer exists")
@@ -35,7 +35,7 @@ async def get_user_token(user: User, db: AsyncSession) -> str:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "No GitHub account connected")
     token = decrypt_secret(account.encrypted_access_token)
     if token is None:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Stored GitHub token could not be decrypted — reconnect GitHub")
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Stored GitHub token could not be decrypted - reconnect GitHub")
     return token
 
 

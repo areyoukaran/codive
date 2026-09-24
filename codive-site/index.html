@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Codive — know what your repositories did while you were gone</title>
+<title>Codive - know what your repositories did while you were gone</title>
 <meta name="description" content="Codive syncs your GitHub activity, reads the diffs and writes you a daily brief: what changed, what is waiting on you, and what is quietly rotting.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -58,7 +58,7 @@
             <span class="brief-since">since you last looked, Thursday 17:40</span>
           </div>
           <div class="lede">
-            <p>The auth rewrite is nearly through — <span class="hl">two pull requests are waiting on you</span>, and atlas/api has failed CI three times on the same test since yesterday's httpx bump. Nothing else moved much.</p>
+            <p>The auth rewrite is nearly through - <span class="hl">two pull requests are waiting on you</span>, and atlas/api has failed CI three times on the same test since yesterday's httpx bump. Nothing else moved much.</p>
           </div>
           <div class="counters">
             <div class="counter is-iris"><div class="n">3</div><div class="l">changes worth reading</div></div>
@@ -75,7 +75,7 @@
             <div class="row-body">
               <div class="row-t"><span class="num mono">atlas/api #412</span>Replace session cookies with rotating refresh tokens</div>
               <div class="row-m"><span>dpark</span><span>opened 3 days ago</span><span class="diffnum"><span class="p">+1,204</span> <span class="m">−689</span></span></div>
-              <div class="row-why">Codive found <b>2 high-severity issues</b> — a rotation race that can log users out, and password change not revoking old tokens.</div>
+              <div class="row-why">Codive found <b>2 high-severity issues</b> - a rotation race that can log users out, and password change not revoking old tokens.</div>
             </div>
             <div class="row-side"><span class="stamp">review</span></div>
           </div>
@@ -110,7 +110,7 @@
       <div class="q">
         <span class="mark g-add">+</span>
         <h3>What changed?</h3>
-        <p>Commits, merges and releases since you last looked — grouped by repository, summarized in a sentence each, not mirrored as a raw feed.</p>
+        <p>Commits, merges and releases since you last looked - grouped by repository, summarized in a sentence each, not mirrored as a raw feed.</p>
       </div>
       <div class="q">
         <span class="mark g-warn">→</span>
@@ -136,7 +136,7 @@
     <div class="showcase">
       <div>
         <h2>Findings you can check, not conclusions you have to trust.</h2>
-        <p class="say">Codive reads the diff alongside the surrounding code, then says what it thinks might be wrong — with the file, the line and the reasoning attached. It is a second reader, not a gate. Disagree with it and move on.</p>
+        <p class="say">Codive reads the diff alongside the surrounding code, then says what it thinks might be wrong - with the file, the line and the reasoning attached. It is a second reader, not a gate. Disagree with it and move on.</p>
         <p class="say">Confidence is shown on every finding. Nothing merges or closes on its own.</p>
       </div>
       <div>
@@ -150,7 +150,7 @@
             <div class="conf"><span>82%</span><span class="conf-bar"><i style="width:82%"></i></span></div>
           </div>
           <div class="finding-body" style="display:block">
-            <p>Two requests refreshing the same token at once both read the family as active, then both write a new head. The second write trips the reuse detector and revokes the family — a user with two tabs open gets logged out.</p>
+            <p>Two requests refreshing the same token at once both read the family as active, then both write a new head. The second write trips the reuse detector and revokes the family - a user with two tabs open gets logged out.</p>
             <pre class="code mono">  84  family = await repo.get_family(token.family_id)
   87
   88  new = await repo.rotate(family, token)   ← no lock here
@@ -221,7 +221,7 @@
       </div>
       <div>
         <dt>Untrusted by default</dt>
-        <dd>Repository text — issue bodies, code comments, README files — is treated as untrusted input and kept separate from system instructions, because a file that says “ignore your instructions” is a file, not an instruction.</dd>
+        <dd>Repository text - issue bodies, code comments, README files - is treated as untrusted input and kept separate from system instructions, because a file that says “ignore your instructions” is a file, not an instruction.</dd>
       </div>
       <div>
         <dt>Leaving</dt>
@@ -234,7 +234,7 @@
 <section class="closing">
   <div class="wrap">
     <h2>Start with one repository. See if the brief is worth reading.</h2>
-    <p class="say">If it is not useful by the second morning, disconnect it — that is the whole test.</p>
+    <p class="say">If it is not useful by the second morning, disconnect it - that is the whole test.</p>
     <div class="hero-cta">
       <a class="btn primary lg js-connect-github" href="onboarding.html">Connect GitHub</a>
       <a class="btn lg" href="app.html">Open the demo</a>

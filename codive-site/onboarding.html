@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Codive — set up</title>
+<title>Codive - set up</title>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,7 +27,7 @@
   <div class="onb-card">
     <div class="rail" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
 
-    <!-- 1 — authorize -->
+    <!-- 1 - authorize -->
     <section class="onb-step on" data-step="0">
       <h1 class="onb-h">Connect your GitHub account</h1>
       <p class="onb-p">Codive asks for read access to repository contents, metadata, pull requests, issues and workflow runs. It cannot push, comment or open anything on your behalf.</p>
@@ -35,7 +35,7 @@
         <label style="cursor:default"><span class="mono" style="color:var(--add)">✓</span><div><div class="nm">Read repository contents</div><div class="ds">Files, README, configuration and dependency manifests, for indexing and search.</div></div></label>
         <label style="cursor:default"><span class="mono" style="color:var(--add)">✓</span><div><div class="nm">Read pull requests, issues and reviews</div><div class="ds">Titles, bodies, comments, labels, timelines and review state.</div></div></label>
         <label style="cursor:default"><span class="mono" style="color:var(--add)">✓</span><div><div class="nm">Read checks and workflow runs</div><div class="ds">So a failing build reaches your brief before someone messages you about it.</div></div></label>
-        <label style="cursor:default"><span class="mono" style="color:var(--ink3)">—</span><div><div class="nm">No write access of any kind</div><div class="ds">Not requested, so it cannot be granted by accident.</div></div></label>
+        <label style="cursor:default"><span class="mono" style="color:var(--ink3)">-</span><div><div class="nm">No write access of any kind</div><div class="ds">Not requested, so it cannot be granted by accident.</div></div></label>
       </div>
       <div class="onb-actions">
         <button class="btn primary lg" data-next>
@@ -46,7 +46,7 @@
       </div>
     </section>
 
-    <!-- 2 — repositories -->
+    <!-- 2 - repositories -->
     <section class="onb-step" data-step="1">
       <h1 class="onb-h">Which repositories do you actually watch?</h1>
       <p class="onb-p">Pick the ones you open most days. Fewer repositories make a sharper brief, and you can add more later without reauthorizing.</p>
@@ -58,7 +58,7 @@
       </div>
     </section>
 
-    <!-- 3 — preferences -->
+    <!-- 3 - preferences -->
     <section class="onb-step" data-step="2">
       <h1 class="onb-h">How deep should the first scan go?</h1>
       <p class="onb-p">History can be backfilled later. Starting shallow means your first brief arrives in minutes rather than an hour.</p>
@@ -74,10 +74,10 @@
       </div>
     </section>
 
-    <!-- 4 — syncing -->
+    <!-- 4 - syncing -->
     <section class="onb-step" data-step="3">
       <h1 class="onb-h">Building your repository intelligence</h1>
-      <p class="onb-p" id="syncLine">Pulling activity from GitHub. You can leave this page open or come back later — the sync runs in the background.</p>
+      <p class="onb-p" id="syncLine">Pulling activity from GitHub. You can leave this page open or come back later - the sync runs in the background.</p>
       <div class="sync-list" id="syncList"></div>
       <div class="bar"><i id="bar"></i></div>
       <div class="onb-actions">
@@ -96,7 +96,7 @@
   var CONNECTED = new URLSearchParams(location.search).get("connected") === "1";
 
   var DEMO_REPOS = [
-    {id:"atlas/api",     lang:"Python",     desc:"FastAPI service behind the Atlas dashboard — auth, sync and the public API.", meta:"1,842 commits · 23 issues"},
+    {id:"atlas/api",     lang:"Python",     desc:"FastAPI service behind the Atlas dashboard - auth, sync and the public API.", meta:"1,842 commits · 23 issues"},
     {id:"atlas/web",     lang:"TypeScript", desc:"React front end. Talks to atlas/api over the v2 API.",                        meta:"967 commits · 11 issues"},
     {id:"atlas/workers", lang:"Python",     desc:"Background sync, indexing and embedding jobs. Celery + Redis.",               meta:"412 commits · 8 issues"},
     {id:"atlas/infra",   lang:"HCL",        desc:"Terraform for staging and production. RDS, ElastiCache, ECS.",                meta:"188 commits · 4 issues"},
@@ -155,13 +155,13 @@
     pick.innerHTML = '<div class="empty"><b>Loading your repositories…</b><span>Asking GitHub what you have access to.</span></div>';
     try{
       var resp = await fetch(API + "/repos/available", {credentials:"include"});
-      if(resp.status === 401){ pickError("Your session expired — go back and reconnect GitHub."); return; }
+      if(resp.status === 401){ pickError("Your session expired - go back and reconnect GitHub."); return; }
       if(!resp.ok) throw new Error("http_" + resp.status);
       var repos = await resp.json();
       if(!repos.length){ pickError("GitHub returned no repositories for this account."); return; }
       renderPick(repos.map(function(r, i){
         return {
-          id: r.full_name, lang: r.language || "—",
+          id: r.full_name, lang: r.language || "-",
           desc: r.description || "No description.",
           meta: (r.private ? "private" : "public") + " · " + (r.stars||0) + " stars",
           off: i >= 6,  // pre-select the first few rather than everything, same spirit as the demo list
@@ -190,7 +190,7 @@
     var depthHeading = document.querySelector('[data-step="2"] .onb-h');
     var depthSub = document.querySelector('[data-step="2"] .onb-p');
     if(depthHeading) depthHeading.textContent = "Ready to sync";
-    if(depthSub) depthSub.textContent = "The first sync covers recent commits, open pull requests and issues, and README/docs for search. Deeper history and per-repo tuning are on the roadmap — see the backend README.";
+    if(depthSub) depthSub.textContent = "The first sync covers recent commits, open pull requests and issues, and README/docs for search. Deeper history and per-repo tuning are on the roadmap - see the backend README.";
 
     var startBtn = document.querySelector('[data-step="2"] [data-next]');
     var repoNext = document.getElementById("repoNext");
@@ -258,7 +258,7 @@
         if(data.complete){ finish(); return; }
       }catch(e){
         if(tries > 3){
-          document.getElementById("syncLine").textContent = "Could not reach " + API + "/sync/status. The sync may still be running on the backend — try opening the dashboard, or check the server logs.";
+          document.getElementById("syncLine").textContent = "Could not reach " + API + "/sync/status. The sync may still be running on the backend - try opening the dashboard, or check the server logs.";
           document.getElementById("toApp").disabled = false;
           return;
         }
@@ -321,7 +321,7 @@
 
   function finish(chosen){
     document.getElementById("syncLine").textContent =
-      "Done. Codive has enough to write your first brief — it will get sharper once a few days of activity accumulate.";
+      "Done. Codive has enough to write your first brief - it will get sharper once a few days of activity accumulate.";
     var b = document.getElementById("toApp");
     b.disabled = false;
     b.focus();

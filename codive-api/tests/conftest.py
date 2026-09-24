@@ -1,6 +1,6 @@
 """
 Fixtures for the FastAPI-integration tests (test_api_smoke.py). These need
-a real Postgres reachable via DATABASE_URL — provided by the `postgres`
+a real Postgres reachable via DATABASE_URL - provided by the `postgres`
 service container in .github/workflows/ci.yml, or by `docker compose up db`
 locally. They are not run as part of the pure-logic test files, which have
 no such requirement and run anywhere Python does.

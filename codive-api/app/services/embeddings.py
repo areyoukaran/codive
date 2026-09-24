@@ -4,7 +4,7 @@ works even with zero external accounts:
 
   - LocalHashEmbedding: a deterministic, dependency-free bag-of-words
     hashing vector. Not semantically strong, but it costs nothing, needs no
-    API key, and runs inside the free web service's own memory — good
+    API key, and runs inside the free web service's own memory - good
     enough for exact-ish and near-miss matching, which is what §12's
     "exact and semantic search" actually needs at MVP scope.
   - GeminiEmbedding: Google AI Studio's free-tier text-embedding endpoint,
@@ -23,8 +23,8 @@ from abc import ABC, abstractmethod
 from app.core.config import get_settings
 
 # httpx is imported lazily inside GeminiEmbedding.embed() rather than at
-# module level, purely so LocalHashEmbedding and cosine_similarity — which
-# have zero third-party dependencies — stay importable and unit-testable
+# module level, purely so LocalHashEmbedding and cosine_similarity - which
+# have zero third-party dependencies - stay importable and unit-testable
 # without httpx installed. Production always has httpx (requirements.txt).
 
 DIM = 384
@@ -67,7 +67,7 @@ class GeminiEmbedding(EmbeddingProvider):
         self._model = model
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
-        import httpx  # lazy — see note at top of file
+        import httpx  # lazy - see note at top of file
 
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self._model}:batchEmbedContents"
         requests = [

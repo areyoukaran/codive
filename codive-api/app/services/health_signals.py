@@ -2,7 +2,7 @@
 Turns synced rows into the signal -> evidence -> action shape from §11 of
 the blueprint: measured thresholds, not a model's opinion. Every function
 here takes plain dicts/lists (not ORM objects) and returns plain dicts, on
-purpose — it has no framework or database import, so it's testable with
+purpose - it has no framework or database import, so it's testable with
 nothing but the standard library, and the same functions can run against
 either real synced rows or the sample front-end data with no adapter.
 """

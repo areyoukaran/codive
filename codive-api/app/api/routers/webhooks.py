@@ -24,7 +24,7 @@ async def github_webhook(
 ):
     settings = get_settings()
     if not settings.github_webhook_secret:
-        raise HTTPException(503, "Webhooks are not configured on this server (GITHUB_WEBHOOK_SECRET unset) — sync still runs on a schedule")
+        raise HTTPException(503, "Webhooks are not configured on this server (GITHUB_WEBHOOK_SECRET unset) - sync still runs on a schedule")
 
     raw = await request.body()
     if not verify_signature(settings.github_webhook_secret, raw, x_hub_signature_256):
@@ -54,5 +54,5 @@ async def _resync_by_name(full_name: str) -> None:
                     continue
                 token = await get_user_token(owner, db)
                 await run_sync(db, repo, token)
-            except Exception:  # noqa: BLE001 — a webhook-triggered resync failing must never crash the handler
+            except Exception:  # noqa: BLE001 - a webhook-triggered resync failing must never crash the handler
                 log.exception("webhook-triggered resync failed for %s", full_name)

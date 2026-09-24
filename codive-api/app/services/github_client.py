@@ -1,5 +1,5 @@
 """
-A thin async wrapper over the GitHub REST API — every call goes through
+A thin async wrapper over the GitHub REST API - every call goes through
 `_get`, which handles pagination, ETag-based conditional requests, primary
 rate-limit backoff, and secondary (Retry-After) backoff in one place. The
 sync service never touches httpx directly.
@@ -41,7 +41,7 @@ class GitHubClient:
         if token:
             headers["Authorization"] = f"Bearer {token}"
         # Sync clients hit large repositories on first sync and legitimately
-        # take minutes, not seconds — this was the actual bug in the
+        # take minutes, not seconds - this was the actual bug in the
         # product's own sample data (httpx 0.26 changed what timeout=None
         # means), so the timeout here is explicit on every leg, not implied.
         self._client = httpx.AsyncClient(
@@ -87,7 +87,7 @@ class GitHubClient:
                     log.warning("primary rate limit exhausted, sleeping %ss", wait)
                     await asyncio.sleep(min(wait, 300) + 1)
                     continue
-                # 403 that isn't a rate limit (e.g. missing scope) — don't retry
+                # 403 that isn't a rate limit (e.g. missing scope) - don't retry
                 raise GitHubAPIError(resp.status_code, resp.text[:300])
 
             if resp.status_code >= 500:

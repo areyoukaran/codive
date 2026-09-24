@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Prints two random values to paste into .env / your host's environment
-variables. Run it once per deployment — don't reuse the same keys across
+variables. Run it once per deployment - don't reuse the same keys across
 environments, and don't commit the output.
 
     python3 scripts/gen-keys.py

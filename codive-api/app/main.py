@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
             await app.state.redis.ping()
             log.info("connected to Redis")
         except Exception:  # noqa: BLE001
-            log.exception("could not connect to REDIS_URL — falling back to in-memory rate limiting")
+            log.exception("could not connect to REDIS_URL - falling back to in-memory rate limiting")
             app.state.redis = None
 
     scheduler = None

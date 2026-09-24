@@ -31,14 +31,14 @@ def _pr_out(p: PullRequest, repo_name: str) -> dict:
         "ci": p.ci_state or "unknown", "review_decision": p.review_decision,
         "branch": p.branch, "labels": p.labels or [], "url": p.url,
         "summary": p.ai_summary, "findings": p.ai_findings or [],
-        "changed": [f"{f['path']} — +{f.get('additions',0)}/-{f.get('deletions',0)}" for f in (p.files_changed or [])],
+        "changed": [f"{f['path']} - +{f.get('additions',0)}/-{f.get('deletions',0)}" for f in (p.files_changed or [])],
     }
 
 
 def _issue_out(i: Issue, repo_name: str) -> dict:
     return {
         "n": i.number, "repo": repo_name, "title": i.title, "author": i.author_login,
-        "state": i.state, "assignee": i.assignee_login or "—", "labels": i.labels or [],
+        "state": i.state, "assignee": i.assignee_login or "-", "labels": i.labels or [],
         "comments": i.comment_count, "opened_at": i.opened_at.isoformat(), "url": i.url,
         "summary": i.ai_summary, "decisions": i.ai_decisions or [], "open": i.ai_open_questions or [],
     }
@@ -151,11 +151,11 @@ async def health_signals(repo: str | None = Query(default=None), user: User = De
 async def daily_brief(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     """
     Computed on demand rather than only read from the scheduler's cached
-    DailyBrief row — a freshly onboarded user (or one on a free-tier
+    DailyBrief row - a freshly onboarded user (or one on a free-tier
     instance that just cold-started, see workers/scheduler.py) shouldn't
     see an empty brief just because a cron job hasn't fired yet. Real
     counters always; the lede is AI-written if a key is configured, a
-    plain templated sentence built from the same real numbers if not —
+    plain templated sentence built from the same real numbers if not -
     see app/services/brief.py.
     """
     from datetime import datetime, timezone

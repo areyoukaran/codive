@@ -1,10 +1,10 @@
 # Render Blueprint. On render.com: New -> Blueprint -> point at this repo,
 # and Render reads this file and creates the service below. Free plan,
 # no card required for the service itself (Neon/Upstash/Groq are separate
-# free accounts you create yourself — see README.md).
+# free accounts you create yourself - see README.md).
 #
 # Secrets are intentionally NOT listed with sync:false values here beyond
-# a placeholder — Render will prompt you to fill each one in in the
+# a placeholder - Render will prompt you to fill each one in in the
 # dashboard before the first deploy.
 services:
   - type: web

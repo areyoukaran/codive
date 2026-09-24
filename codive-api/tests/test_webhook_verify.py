@@ -34,7 +34,7 @@ def test_missing_header_is_rejected():
 
 def test_malformed_header_is_rejected():
     assert verify_signature(SECRET, BODY, "not-the-right-format") is False
-    assert verify_signature(SECRET, BODY, "sha1=deadbeef") is False  # GitHub's older, weaker scheme — must not be accepted
+    assert verify_signature(SECRET, BODY, "sha1=deadbeef") is False  # GitHub's older, weaker scheme - must not be accepted
 
 
 def test_signature_for_different_secret_length_does_not_crash():

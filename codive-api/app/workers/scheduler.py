@@ -1,12 +1,12 @@
 """
 A free-tier web service is one process, not a web dyno plus a worker
-dyno — so background jobs run in-process with APScheduler rather than a
+dyno - so background jobs run in-process with APScheduler rather than a
 separate Celery worker, matching §18's "background jobs" without needing
 infrastructure the free tier doesn't offer.
 
 Trade-off, stated plainly: on Render's free tier the process spins down
 after 15 minutes with no inbound HTTP traffic, and an idle scheduler alone
-does not count as traffic — so on a totally quiet free instance, scheduled
+does not count as traffic - so on a totally quiet free instance, scheduled
 jobs pause until the next real request wakes it back up. A paid instance,
 or a free external cron hitting /health every few minutes, keeps it warm.
 This is documented in the README's deployment section, not hidden.

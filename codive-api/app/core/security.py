@@ -3,7 +3,7 @@ Two unrelated jobs live here on purpose, because they're the two places a
 mistake is expensive: signing the session JWT, and encrypting GitHub access
 tokens at rest.
 
-Session JWTs use PyJWT (HS256) — short, standard, no reason to hand-roll it.
+Session JWTs use PyJWT (HS256) - short, standard, no reason to hand-roll it.
 GitHub tokens are encrypted with Fernet (AES-128-CBC + HMAC, from the
 `cryptography` package) before they ever reach the database, so a database
 leak does not hand out live GitHub credentials.
@@ -20,7 +20,7 @@ from app.core.config import get_settings
 
 # PyJWT is imported lazily inside the two functions that need it rather than
 # at module level. Behavior in production is identical (requirements.txt
-# always installs it) — this only changes *when* the import happens, so
+# always installs it) - this only changes *when* the import happens, so
 # that the Fernet-based functions below (which have no PyJWT dependency at
 # all) stay importable and unit-testable in an environment that has
 # `cryptography` but not yet `PyJWT`, without needing a stub or a mock.
@@ -41,7 +41,7 @@ class SessionClaims:
 
 
 def create_session_token(user_id: str, github_login: str) -> str:
-    import jwt  # lazy — see note at top of file
+    import jwt  # lazy - see note at top of file
 
     settings = get_settings()
     if not settings.secret_key:
@@ -57,7 +57,7 @@ def create_session_token(user_id: str, github_login: str) -> str:
 
 
 def verify_session_token(token: str) -> SessionClaims | None:
-    import jwt  # lazy — see note at top of file
+    import jwt  # lazy - see note at top of file
 
     settings = get_settings()
     if not settings.secret_key:

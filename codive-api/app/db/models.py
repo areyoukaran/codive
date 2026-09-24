@@ -3,7 +3,7 @@ Schema follows §15 of the product blueprint, trimmed to what Phase 1-3
 (foundation, daily usefulness, AI) actually needs. Every synced row keeps
 its GitHub source id and a `repo_id` foreign key, so nothing is stored
 without a traceable origin, and every query that lists a user's data is
-scoped through `repo_id -> Repository.owner_user_id` — there is no
+scoped through `repo_id -> Repository.owner_user_id` - there is no
 cross-tenant table to forget to filter.
 """
 from __future__ import annotations
@@ -50,7 +50,7 @@ class User(Base):
 
 class GithubAccount(Base):
     """One row per user. The GitHub access token is stored encrypted (see
-    app.core.security) — never in plaintext, never logged."""
+    app.core.security) - never in plaintext, never logged."""
     __tablename__ = "github_accounts"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True)
@@ -199,7 +199,7 @@ _EMBED_DIM = 384  # matches the default local + Gemini-compatible dimension used
 
 
 class CodeChunk(Base):
-    """Indexed source: README, docs, config, and selected file excerpts —
+    """Indexed source: README, docs, config, and selected file excerpts -
     never full proprietary source dumps by default (see sync_service)."""
     __tablename__ = "code_chunks"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
@@ -210,7 +210,7 @@ class CodeChunk(Base):
     commit_sha: Mapped[str | None] = mapped_column(String(40))
     if Vector is not None:
         embedding = mapped_column(Vector(_EMBED_DIM), nullable=True)
-    else:  # pragma: no cover — only hit if pgvector-python truly isn't installed
+    else:  # pragma: no cover - only hit if pgvector-python truly isn't installed
         embedding = mapped_column(JSONB, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 

@@ -7,7 +7,7 @@ fake timer.
 
 Deliberately conservative about what source code it stores: only README,
 top-level docs, and dependency manifests are indexed by default (see
-_INDEXABLE_PATTERNS) — full proprietary source is not vacuumed into the
+_INDEXABLE_PATTERNS) - full proprietary source is not vacuumed into the
 database unless a repository is explicitly marked for deeper indexing.
 That default is the product's own §19 ("treat repository text as
 untrusted input", "least privilege") applied to storage, not just access.
@@ -120,7 +120,7 @@ async def run_sync(db: AsyncSession, repo: Repository, token: str) -> SyncJob:
                             {"path": f["filename"], "additions": f.get("additions", 0), "deletions": f.get("deletions", 0)}
                             for f in files[:40]
                         ]
-                    except Exception:  # noqa: BLE001 — file list is best-effort, never blocks the sync
+                    except Exception:  # noqa: BLE001 - file list is best-effort, never blocks the sync
                         log.warning("could not fetch files for %s#%s", repo.full_name, number)
             await db.commit()
             await _set_stage(db, job, "issues & comments")
@@ -175,7 +175,7 @@ async def run_sync(db: AsyncSession, repo: Repository, token: str) -> SyncJob:
                             url=r.get("html_url"),
                         ))
                 await db.commit()
-            except Exception:  # noqa: BLE001 — checks API can 404 on repos with no checks configured
+            except Exception:  # noqa: BLE001 - checks API can 404 on repos with no checks configured
                 log.info("no check runs available for %s", repo.full_name)
             await _set_stage(db, job, "indexing files")
 
@@ -197,7 +197,7 @@ async def run_sync(db: AsyncSession, repo: Repository, token: str) -> SyncJob:
             await db.commit()
             return job
 
-    except Exception as exc:  # noqa: BLE001 — a failed sync is recorded, not raised past the caller
+    except Exception as exc:  # noqa: BLE001 - a failed sync is recorded, not raised past the caller
         log.exception("sync failed for %s", repo.full_name)
         job.status = "error"
         job.error = str(exc)[:500]

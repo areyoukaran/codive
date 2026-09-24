@@ -19,7 +19,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 # In-memory OAuth `state` store, one process. Good enough for the CSRF check
 # it exists for; a multi-instance deployment would move this to Redis, same
-# as the rate limiter — the interface is small on purpose so that's a
+# as the rate limiter - the interface is small on purpose so that's a
 # one-file change later, not a rewrite.
 _pending_states: dict[str, float] = {}
 _STATE_TTL_SECONDS = 600
@@ -54,7 +54,7 @@ async def github_login():
 async def github_callback(code: str, state: str, db: AsyncSession = Depends(get_db)):
     settings = get_settings()
     if not _consume_state(state):
-        raise HTTPException(400, "OAuth state is invalid or expired — start over from the login button")
+        raise HTTPException(400, "OAuth state is invalid or expired - start over from the login button")
 
     redirect_uri = f"{settings.backend_url}/auth/github/callback"
     token_data = await GitHubClient.exchange_code(

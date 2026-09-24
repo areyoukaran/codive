@@ -194,7 +194,7 @@ def upgrade() -> None:
 
     # HNSW index for approximate nearest-neighbor search over code_chunks.
     # Built CONCURRENTLY-equivalent isn't available inside a transactional
-    # migration on every provider, so this stays a plain index — fine at
+    # migration on every provider, so this stays a plain index - fine at
     # MVP scale (a few thousand chunks), and documented in the README for
     # anyone who later needs to rebuild it CONCURRENTLY outside a migration.
     if Vector is not None:

@@ -1,4 +1,4 @@
-/* Codive — landing page and onboarding.
+/* Codive - landing page and onboarding.
    Tokens, buttons, tags and the gutter ledger come from app.css. */
 
 body.site{background:var(--paper)}
@@ -48,7 +48,7 @@ body.site{background:var(--paper)}
 .band .say{font-size:15.5px;color:var(--ink2);line-height:1.65;max-width:60ch;margin:0 0 30px}
 .band .say:last-child{margin-bottom:0}
 
-/* questions list — the four things it answers */
+/* questions list - the four things it answers */
 .qlist{border-top:1px solid var(--rule)}
 .q{display:grid;grid-template-columns:30px minmax(0,1fr) minmax(0,1.15fr);gap:22px;
   padding:20px 0;border-bottom:1px solid var(--rule);align-items:baseline}
@@ -61,7 +61,7 @@ body.site{background:var(--paper)}
 .showcase{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:34px;align-items:center}
 .showcase .code{font-size:12.4px}
 
-/* steps — a real sequence, so numbered */
+/* steps - a real sequence, so numbered */
 .steps{counter-reset:s;display:grid;gap:0;border-top:1px solid var(--rule)}
 .step{display:grid;grid-template-columns:34px minmax(0,1fr);gap:18px;padding:19px 0;border-bottom:1px solid var(--rule)}
 .step::before{counter-increment:s;content:counter(s);font-family:"IBM Plex Mono",monospace;font-size:12.5px;

@@ -1,23 +1,23 @@
 """
-Centralized settings, read fresh every time Settings() is constructed —
+Centralized settings, read fresh every time Settings() is constructed -
 which in normal operation is exactly once per process, via the
 lru_cache'd get_settings() below.
 
 Every value with a default is optional; the app boots and serves the
 health check without any of them. Features that need a value you have not
-set turn themselves off (see Settings.warnings()) rather than crashing —
+set turn themselves off (see Settings.warnings()) rather than crashing -
 so a half-configured deployment still comes up and tells you what's missing
 instead of 500ing.
 
 Note for anyone extending this: values are read inside __init__, not as
 class-body assignments. `secret_key: str | None = _get("SECRET_KEY")` at
-class scope would only evaluate once, at import time — os.environ changes
+class scope would only evaluate once, at import time - os.environ changes
 after that point (exactly what tests do between cases, and what a process
 manager occasionally does before the app's first real request) would
 silently not take effect even after get_settings.cache_clear(). Reading in
 __init__ makes "clear the cache, get fresh env" actually true. (This was a
 real bug caught by tests/test_llm_provider_selection.py during development
-— see the git history if you're curious what it looked like broken.)
+- see the git history if you're curious what it looked like broken.)
 """
 from __future__ import annotations
 
@@ -91,10 +91,10 @@ class Settings:
         self.cookie_secure: bool = _get_bool("COOKIE_SECURE", self.env != "development")
         # SameSite=Lax survives the OAuth redirect (a top-level navigation)
         # but is NOT sent on the fetch()/XHR calls the frontend makes for
-        # every other route once it's a different domain from the API —
+        # every other route once it's a different domain from the API -
         # which it is in the real deployment (GitHub Pages vs Render).
         # Cross-site cookies require SameSite=None, and browsers only honor
-        # None when Secure is also set — which cookie_secure already is
+        # None when Secure is also set - which cookie_secure already is
         # outside local dev, so this falls out of that one flag rather than
         # needing its own env var.
         self.cookie_samesite: str = "none" if self.cookie_secure else "lax"
@@ -103,19 +103,19 @@ class Settings:
         """Human-readable list of missing configuration, surfaced at /health."""
         out = []
         if not self.secret_key:
-            out.append("SECRET_KEY not set — sessions cannot be issued")
+            out.append("SECRET_KEY not set - sessions cannot be issued")
         if not self.token_encryption_key:
-            out.append("TOKEN_ENCRYPTION_KEY not set — GitHub tokens cannot be stored")
+            out.append("TOKEN_ENCRYPTION_KEY not set - GitHub tokens cannot be stored")
         if not self.database_url:
-            out.append("DATABASE_URL not set — nothing can be persisted")
+            out.append("DATABASE_URL not set - nothing can be persisted")
         if not self.github_client_id or not self.github_client_secret:
-            out.append("GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET not set — GitHub OAuth is disabled")
+            out.append("GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET not set - GitHub OAuth is disabled")
         if not self.redis_url:
-            out.append("REDIS_URL not set — rate limiting and caching fall back to in-process memory (fine for one instance, not for several)")
+            out.append("REDIS_URL not set - rate limiting and caching fall back to in-process memory (fine for one instance, not for several)")
         if not self.groq_api_key and not self.gemini_api_key:
-            out.append("No GROQ_API_KEY or GEMINI_API_KEY set — AI summaries and chat use a templated fallback, not a model")
+            out.append("No GROQ_API_KEY or GEMINI_API_KEY set - AI summaries and chat use a templated fallback, not a model")
         if not self.github_webhook_secret:
-            out.append("GITHUB_WEBHOOK_SECRET not set — webhook delivery is disabled, sync falls back to polling only")
+            out.append("GITHUB_WEBHOOK_SECRET not set - webhook delivery is disabled, sync falls back to polling only")
         return out
 
 

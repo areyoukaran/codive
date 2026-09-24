@@ -16,7 +16,7 @@ def parse_link_header(header_value: str | None) -> dict[str, str]:
     """
     'Link: <https://api.github.com/x?page=2>; rel="next", <...>; rel="last"'
     ->    {"next": "https://api.github.com/x?page=2", "last": "..."}
-    Returns {} for a missing or malformed header — callers treat that as
+    Returns {} for a missing or malformed header - callers treat that as
     "no more pages" rather than raising.
     """
     if not header_value:
@@ -59,7 +59,7 @@ def parse_rate_limit_headers(headers: dict[str, str]) -> RateLimitStatus | None:
 
 def retry_after_seconds(headers: dict[str, str]) -> int | None:
     """
-    GitHub sends a plain `Retry-After` (seconds) on secondary rate limits —
+    GitHub sends a plain `Retry-After` (seconds) on secondary rate limits -
     the "you're going too fast, not out of quota" case, distinct from the
     primary limit above. Respecting this was the actual fix behind the
     "retry storm" scenario in the product's sample data.
