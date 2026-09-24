@@ -172,6 +172,35 @@ class GitHubClient:
         async for c in self._paginated(f"/repos/{owner}/{name}/commits", params=params):
             yield c
 
+    async def commit_detail(self, owner: str, name: str, ref: str) -> dict:
+        """Return a commit plus its changed-file patches from GitHub."""
+        resp = await self._get(f"/repos/{owner}/{name}/commits/{ref}")
+        data = resp.json()
+        return {
+            "sha": data.get("sha"),
+            "html_url": data.get("html_url"),
+            "message": (data.get("commit") or {}).get("message") or "",
+            "author": (data.get("author") or {}).get("login") or ((data.get("commit") or {}).get("author") or {}).get("name"),
+            "author_avatar": (data.get("author") or {}).get("avatar_url"),
+            "committed_at": ((data.get("commit") or {}).get("author") or {}).get("date"),
+            "stats": data.get("stats") or {"additions": 0, "deletions": 0, "total": 0},
+            "parents": [p.get("sha") for p in (data.get("parents") or []) if p.get("sha")],
+            "files": [
+                {
+                    "filename": f.get("filename"),
+                    "status": f.get("status"),
+                    "additions": f.get("additions", 0) or 0,
+                    "deletions": f.get("deletions", 0) or 0,
+                    "changes": f.get("changes", 0) or 0,
+                    "blob_url": f.get("blob_url"),
+                    "raw_url": f.get("raw_url"),
+                    "contents_url": f.get("contents_url"),
+                    "patch": f.get("patch"),
+                }
+                for f in (data.get("files") or [])
+            ],
+        }
+
     async def pulls(self, owner: str, name: str, *, state: str = "all") -> AsyncIterator[dict]:
         async for pr in self._paginated(f"/repos/{owner}/{name}/pulls", params={"state": state, "sort": "updated", "direction": "desc"}):
             yield pr

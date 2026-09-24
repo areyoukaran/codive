@@ -262,7 +262,7 @@ function adaptIssue(i){
 }
 function adaptCommit(c){
   return {sha: c.sha, repo: c.repo, author: c.author || "unknown", msg: c.msg,
-          when: relativeShort(c.committed_at), add: c.add, del: c.del, pr: c.pr};
+          when: relativeShort(c.committed_at), committed_at: c.committed_at, add: c.add, del: c.del, pr: c.pr, url: c.url};
 }
 function adaptCI(c){
   return {repo: c.repo, wf: c.wf, branch: c.branch, state: c.state, when: relativeShort(c.started_at),
@@ -440,7 +440,7 @@ function go(v){
 function render(){
   renderNav();
   const p = $("#page"); p.innerHTML = "";
-  const fn = {overview:vOverview, repos:vRepos, repo:vRepo, activity:vActivity, prs:vPRs, pr:vPR, issues:vIssues, issue:vIssue, health:vHealth}[view.v];
+  const fn = {overview:vOverview, repos:vRepos, repo:vRepo, activity:vActivity, prs:vPRs, pr:vPR, issues:vIssues, issue:vIssue, health:vHealth, commit:vCommit}[view.v];
   (fn || vOverview)(p);
 }
 
@@ -1117,15 +1117,148 @@ function ciRow(c){
   }, c.when, bad ? ()=>go({v:"pr",n:418}) : null);
 }
 function commitRow(c){
-  return row("+","g-add", b=>{
+  const open = ()=>go({v:"commit",repo:c.repo,sha:c.sha});
+  const r = row("+","g-add", b=>{
     const t = el("div","row-t");
-    t.appendChild(el("span","num mono",c.sha));
+    t.appendChild(el("span","num mono",String(c.sha).slice(0,7)));
     t.appendChild(document.createTextNode(c.msg));
     b.appendChild(t);
     const parts = [whoChip(c.author), el("span","mono",c.repo), c.when, diffNum(c.add,c.del)];
     if(c.pr) parts.push(tag("#"+c.pr,"iris"));
+
+    // Keep the explicit action separate from the row click so it is
+    // unambiguous that this opens the real commit diff.
+    const diffLink = tag("View diff","iris");
+    diffLink.setAttribute("role","button");
+    diffLink.setAttribute("tabindex","0");
+    diffLink.setAttribute("aria-label","View diff for commit "+String(c.sha).slice(0,7));
+    diffLink.addEventListener("click", e=>{ e.preventDefault(); e.stopPropagation(); open(); });
+    diffLink.addEventListener("keydown", e=>{
+      if(e.key==="Enter" || e.key===" "){ e.preventDefault(); e.stopPropagation(); open(); }
+    });
+    parts.push(diffLink);
     b.appendChild(metaLine(parts));
-  }, c.when, c.pr ? ()=>go({v:"pr",n:c.pr}) : null);
+  }, c.when);
+  r.classList.add("commit-row");
+  r.setAttribute("role","link");
+  r.setAttribute("tabindex","0");
+  r.addEventListener("click", open);
+  r.addEventListener("keydown", e=>{
+    if(e.target !== r) return;
+    if(e.key==="Enter" || e.key===" "){ e.preventDefault(); open(); }
+  });
+  return r;
+}
+
+let commitDetailCache = new Map();
+
+async function loadCommitDetail(repo, sha){
+  const key = repo+"@"+sha;
+  if(commitDetailCache.has(key)) return commitDetailCache.get(key);
+  const base = (window.CODIVE && window.CODIVE.apiBase || "").replace(/\/$/,"");
+  if(!base) throw new Error("Live API is not configured");
+  const url = base + "/commit-detail?repo=" + encodeURIComponent(repo) + "&sha=" + encodeURIComponent(sha);
+  const r = await fetch(url,{credentials:"include"});
+  const text = await r.text();
+  if(!r.ok){
+    let detail = text;
+    try{ const j = JSON.parse(text); detail = j.detail || j.message || text; }catch(e){}
+    throw new Error(detail || ("Commit request failed with "+r.status));
+  }
+  const data = JSON.parse(text);
+  commitDetailCache.set(key,data);
+  return data;
+}
+
+function patchLineClass(line){
+  if(line.startsWith("@@")) return "diff-line hunk";
+  if(line.startsWith("+")) return "diff-line add";
+  if(line.startsWith("-")) return "diff-line del";
+  return "diff-line context";
+}
+
+function renderPatch(patch){
+  const wrap = el("div","patch");
+  if(!patch){
+    wrap.appendChild(el("div","patch-empty","GitHub did not return a text patch for this file. It may be binary, too large, or generated without a patch."));
+    return wrap;
+  }
+  String(patch).split("\n").forEach(line=>{
+    const d = el("div",patchLineClass(line));
+    const prefix = line.startsWith("+") || line.startsWith("-") || line.startsWith(" ") ? line[0] : " ";
+    const text = line.startsWith(prefix) && (prefix === "+" || prefix === "-" || prefix === " ") ? line.slice(1) : line;
+    d.appendChild(el("span","diff-prefix",prefix));
+    d.appendChild(el("span","diff-code",text));
+    wrap.appendChild(d);
+  });
+  return wrap;
+}
+
+function commitFilePanel(file){
+  const pan = el("div","commit-file");
+  const head = el("div","commit-file-head");
+  const left = el("div");
+  left.appendChild(el("div","commit-file-name mono",file.filename || "unknown file"));
+  const meta = [tag(file.status || "modified"), diffNum(file.additions || 0,file.deletions || 0)];
+  left.appendChild(metaLine(meta));
+  head.appendChild(left);
+  const actions = el("div","commit-file-actions");
+  if(file.blob_url){
+    const a = document.createElement("a"); a.className="btn sm"; a.href=file.blob_url; a.target="_blank"; a.rel="noopener"; a.textContent="Open file"; actions.appendChild(a);
+  }
+  const ask = el("button","btn sm","Ask Codive");
+  ask.addEventListener("click",()=>{ openAsk(); askAsk("Review the changes in "+file.filename+" from commit "+String(view.sha).slice(0,7)+". What bug or regression could this introduce, and what should I inspect?"); });
+  actions.appendChild(ask);
+  head.appendChild(actions);
+  pan.appendChild(head);
+  pan.appendChild(renderPatch(file.patch));
+  return pan;
+}
+
+async function vCommit(p){
+  const c = COMMITS.find(x=>x.repo===view.repo && String(x.sha).startsWith(String(view.sha)));
+  p.appendChild(backLink("Activity",{v:"activity"}));
+  const h = el("div","detail-head");
+  const t = el("h1","detail-title");
+  t.appendChild(el("span","num",view.repo+" "));
+  t.appendChild(document.createTextNode("commit "+String(view.sha).slice(0,7)));
+  h.appendChild(t);
+  if(c){
+    const sub = el("p","commit-sub",c.msg); h.appendChild(sub);
+    const m = el("div","detail-meta");
+    m.appendChild(whoChip(c.author)); m.appendChild(el("span",null,c.when)); m.appendChild(diffNum(c.add,c.del));
+    if(c.pr) m.appendChild(tag("PR #"+c.pr,"iris"));
+    if(c.url){ const a=document.createElement("a"); a.href=c.url; a.target="_blank"; a.rel="noopener"; a.className="btn sm"; a.textContent="Open on GitHub"; m.appendChild(a); }
+    h.appendChild(m);
+  }
+  p.appendChild(h);
+
+  const loading = el("div","panel commit-loading","Loading the real commit diff from GitHub…");
+  loading.style.marginTop="18px"; p.appendChild(loading);
+  try{
+    const d = await loadCommitDetail(view.repo,view.sha);
+    loading.remove();
+    const stats = d.stats || {};
+    const top = sec("Commit diff", (d.files||[]).length+" files changed");
+    top.style.marginTop="18px";
+    const summary = el("div","panel commit-summary");
+    summary.appendChild(el("div",null,d.message.split("\n")[0] || c?.msg || "Commit"));
+    summary.appendChild(metaLine([el("span","mono",String(d.sha).slice(0,12)), diffNum(stats.additions||0,stats.deletions||0), el("span",null,(stats.total||0)+" total changes")]));
+    top.appendChild(summary);
+    const files = el("div","commit-files");
+    (d.files||[]).forEach(file=>files.appendChild(commitFilePanel(file)));
+    if(!(d.files||[]).length) files.appendChild(emptyState("No changed files returned","GitHub did not return file metadata for this commit."));
+    top.appendChild(files); p.appendChild(top);
+
+    const askPan = el("div","panel commit-ask");
+    askPan.appendChild(el("h3","panel-t","Ask about this commit"));
+    const qs=["What actually changed here?","Could this commit introduce a bug?","What files are most risky in this commit?","What should I test before shipping this?"];
+    const sg=el("div","sugg"); qs.forEach(q=>{const b=el("button",null,q);b.addEventListener("click",()=>{openAsk();askAsk(q+" Commit: "+view.repo+" @ "+String(view.sha).slice(0,12));});sg.appendChild(b);});
+    askPan.appendChild(sg); p.appendChild(askPan);
+  }catch(e){
+    loading.className="panel commit-error"; loading.textContent="Could not load the commit diff: "+(e.message||String(e));
+    const retry=el("button","btn sm","Retry"); retry.style.marginTop="10px"; retry.addEventListener("click",()=>go({v:"commit",repo:view.repo,sha:view.sha})); loading.appendChild(document.createTextNode(" ")); loading.appendChild(retry);
+  }
 }
 
 function pageHead(title, sub){
@@ -1146,7 +1279,7 @@ const INDEX = [];
 REPOS.forEach(r=>INDEX.push({type:"repo", t:r.id, sub:r.desc, r:r.id, kw:r.desc+" "+r.lang, go:{v:"repo",id:r.id}}));
 PRS.forEach(x=>INDEX.push({type:"pull", t:"#"+x.n+" "+x.title, sub:x.repo+" · "+x.author, r:x.repo, kw:x.summary+" "+x.labels.join(" ")+" "+x.branch, go:{v:"pr",n:x.n}}));
 ISSUES.forEach(i=>INDEX.push({type:"issue", t:"#"+i.n+" "+i.title, sub:i.repo+" · "+i.comments+" comments", r:i.repo, kw:i.summary+" "+i.labels.join(" "), go:{v:"issue",n:i.n}}));
-COMMITS.forEach(c=>INDEX.push({type:"commit", t:c.msg, sub:c.repo+" · "+c.sha+" · "+c.when, r:c.repo, kw:c.sha+" "+c.author, go:c.pr?{v:"pr",n:c.pr}:{v:"repo",id:c.repo}}));
+COMMITS.forEach(c=>INDEX.push({type:"commit", t:c.msg, sub:c.repo+" · "+String(c.sha).slice(0,7)+" · "+c.when, r:c.repo, kw:c.sha+" "+c.author, go:{v:"commit",repo:c.repo,sha:c.sha}}));
 FILES.forEach(f=>INDEX.push({type:"file", t:f.path, sub:f.repo, r:f.repo, kw:f.kw, go:{v:"repo",id:f.repo}}));
 
 let cmdkMode = "exact", cmdkSel = 0, cmdkHits = [];
@@ -1233,7 +1366,7 @@ function backendAsk(q, body, log){
     method:"POST",
     credentials:"include",
     headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({question:q, scope:scope, view:view})
+    body: JSON.stringify({question:q, scope:scope, view:view, commit_repo:view.v === "commit" ? view.repo : null, commit_sha:view.v === "commit" ? view.sha : null})
   })
   .then(function(r){
     if(r.status === 401){ var e = new Error("unauthenticated"); e.code = 401; throw e; }
@@ -1252,7 +1385,17 @@ function backendAsk(q, body, log){
     }
     return r.json();
   })
-  .then(function(d){ linkifyCitations(d.answer || d.text || "(empty response)", body); log.scrollTop = log.scrollHeight; })
+  .then(function(d){
+    var answer = d && (d.answer || d.text);
+    if(typeof answer !== "string" || !answer.trim()){
+      var empty = new Error("empty_response");
+      empty.code = 502;
+      empty.detail = "The LLM provider returned an empty answer.";
+      throw empty;
+    }
+    linkifyCitations(answer, body);
+    log.scrollTop = log.scrollHeight;
+  })
   .catch(function(err){
     if(err && err.code === 401){ body.textContent = "Signed out - reconnect GitHub to keep asking questions."; }
     else if(err && err.code === 429){ body.textContent = "Slow down a little - try again in a few seconds."; }
@@ -1279,6 +1422,7 @@ function updateAskContext(){
   if(view.v === "pr") chips.push("PR #"+view.n);
   if(view.v === "issue") chips.push("issue #"+view.n);
   if(view.v === "repo") chips.push(view.id);
+  if(view.v === "commit") chips.push(view.repo+" @ "+String(view.sha).slice(0,7));
   chips.forEach(t=>c.appendChild(tag(t,"iris")));
 }
 function openAsk(){
@@ -1324,6 +1468,16 @@ function linkifyCitations(text, host){
         if(kind==="pr" && prBy(+id)) { closeAsk(); go({v:"pr",n:+id}); }
         else if(kind==="issue" && issueBy(+id)) { closeAsk(); go({v:"issue",n:+id}); }
         else if(kind==="repo" && repoBy(id)) { closeAsk(); go({v:"repo",id:id}); }
+        else if(kind==="commit"){
+          const raw = id.trim();
+          const parts = raw.split("@");
+          if(parts.length === 2 && parts[0] && parts[1]){
+            closeAsk();
+            go({v:"commit",repo:parts[0],sha:parts[1]});
+          } else {
+            toast("Could not resolve commit "+id);
+          }
+        }
         else toast("Would open "+id);
       });
       para.appendChild(document.createTextNode(" "));
@@ -1363,6 +1517,14 @@ function askAsk(q){
   a.appendChild(body);
   log.appendChild(a);
   log.scrollTop = log.scrollHeight;
+
+  // In live mode the Codive backend is the source of truth. Do not let the
+  // optional Claude/sample integration intercept the request and return an
+  // empty answer, which used to produce "(empty response)" in the UI.
+  if(backendConfigured() && IS_LIVE){
+    backendAsk(q, body, log);
+    return;
+  }
 
   const canned = CANNED[q.trim().toLowerCase()];
   withSample(async (sample)=>{

@@ -5,8 +5,10 @@ __pycache__/
 .venv/
 venv/
 .env
+.env.*
 *.db
 *.sqlite3
 .DS_Store
 htmlcov/
 .coverage
+!.env.example

@@ -69,9 +69,13 @@ class Settings:
         # optional AI providers; without a key, summaries/chat fall back to
         # a deterministic templated answer built straight from synced data
         self.groq_api_key: str | None = _get("GROQ_API_KEY")
-        self.groq_model: str = _get("GROQ_MODEL", "llama-3.3-70b-versatile")
+        self.groq_model: str = _get("GROQ_MODEL", "openai/gpt-oss-120b")
         self.gemini_api_key: str | None = _get("GEMINI_API_KEY")
         self.gemini_model: str = _get("GEMINI_MODEL", "gemini-2.0-flash")
+        self.embedding_model: str = _get(
+            "EMBEDDING_MODEL",
+            "gemini-embedding-2",
+        )
         self.llm_provider: str = _get("LLM_PROVIDER", "auto")
         self.embedding_provider: str = _get("EMBEDDING_PROVIDER", "auto")
 

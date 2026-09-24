@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_user_token
 from app.db.base import get_db
 from app.db.models import Commit, Issue, PullRequest, Repository, User, WorkflowRun
 from app.services.brief import compute_counters, generate_lede
+from app.services.github_client import GitHubClient, GitHubAPIError
 from app.services.health_signals import compute_all
 
 router = APIRouter(tags=["activity"])
@@ -87,11 +88,49 @@ async def list_commits(repo: str | None = Query(default=None), user: User = Depe
         .limit(100)
     )).all()
     return [
-        {"sha": c.sha[:7], "repo": name, "author": c.author_login or c.author_name or "unknown",
+        {"sha": c.sha, "repo": name, "author": c.author_login or c.author_name or "unknown",
          "msg": c.message.splitlines()[0][:200], "committed_at": c.committed_at.isoformat(),
          "add": c.additions, "del": c.deletions, "pr": c.pull_request_number, "url": c.url}
         for c, name in rows
     ]
+
+
+@router.get("/commit-detail")
+async def commit_detail(
+    repo: str = Query(..., min_length=3),
+    sha: str = Query(..., min_length=7, max_length=40),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Fetch one commit and its real GitHub file patches on demand.
+
+    Commit history is stored locally for fast dashboards, but the full patch
+    is deliberately fetched from GitHub only when a developer opens a
+    commit. That keeps normal synchronization light while making commit
+    inspection evidence-backed and current.
+    """
+    repository = await db.scalar(
+        select(Repository).where(
+            Repository.owner_user_id == user.id,
+            Repository.full_name == repo,
+            Repository.is_watched.is_(True),
+        )
+    )
+    if repository is None:
+        raise HTTPException(404, "Repository is not in your watched repositories")
+
+    try:
+        token = await get_user_token(user, db)
+        owner, name = repo.split("/", 1)
+        async with GitHubClient(token) as gh:
+            detail = await gh.commit_detail(owner, name, sha)
+    except ValueError as exc:
+        raise HTTPException(400, "repo must be in owner/name format") from exc
+    except GitHubAPIError as exc:
+        status = exc.status if exc.status in {400, 404, 409, 403, 429} else 502
+        raise HTTPException(status, str(exc)) from exc
+
+    return {"repo": repo, **detail}
 
 
 @router.get("/ci")

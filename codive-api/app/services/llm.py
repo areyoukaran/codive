@@ -49,13 +49,22 @@ class GroqProvider(LLMProvider):
         self._key = api_key
         self._model = model
 
-    async def complete(self, system: str, user: str, *, max_tokens: int = 500) -> str:
-        import httpx  # lazy - see note at top of file
+    async def complete(
+        self,
+        system: str,
+        user: str,
+        *,
+        max_tokens: int = 500
+    ) -> str:
+        import httpx
 
         async with httpx.AsyncClient(timeout=45.0) as c:
             resp = await c.post(
                 "https://api.groq.com/openai/v1/chat/completions",
-                headers={"Authorization": f"Bearer {self._key}"},
+                headers={
+                    "Authorization": f"Bearer {self._key}",
+                    "Content-Type": "application/json",
+                },
                 json={
                     "model": self._model,
                     "messages": [
@@ -66,11 +75,37 @@ class GroqProvider(LLMProvider):
                     "temperature": 0.3,
                 },
             )
-            if resp.status_code == 429:
-                raise LLMError("groq rate limit hit - try again shortly")
-            resp.raise_for_status()
+
+        if resp.status_code == 429:
+            raise LLMError(
+                "Groq rate limit hit - try again shortly."
+            )
+
+        if resp.status_code >= 400:
+            try:
+                error = resp.json().get("error", {})
+                message = error.get("message", resp.text)
+            except Exception:
+                message = resp.text
+
+            raise LLMError(
+                f"Groq API error ({resp.status_code}): {message[:500]}"
+            )
+
+        try:
             data = resp.json()
-        return data["choices"][0]["message"]["content"].strip()
+            content = data["choices"][0]["message"].get("content")
+            if not isinstance(content, str) or not content.strip():
+                raise LLMError(
+                    f"Groq returned an empty answer: {resp.text[:500]}"
+                )
+            return content.strip()
+        except LLMError:
+            raise
+        except (KeyError, IndexError, TypeError, AttributeError) as exc:
+            raise LLMError(
+                f"Unexpected Groq response: {resp.text[:500]}"
+            ) from exc
 
 
 class GeminiProvider(LLMProvider):
@@ -95,13 +130,35 @@ class GeminiProvider(LLMProvider):
                 },
             )
             if resp.status_code == 429:
-                raise LLMError("gemini rate limit hit - try again shortly")
-            resp.raise_for_status()
+                raise LLMError("Gemini rate limit hit - try again shortly")
+            if resp.status_code >= 400:
+                try:
+                    error = resp.json().get("error", {})
+                    message = error.get("message", resp.text)
+                except Exception:
+                    message = resp.text
+                raise LLMError(
+                    f"Gemini API error ({resp.status_code}): {message[:500]}"
+                )
             data = resp.json()
         try:
-            return data["candidates"][0]["content"]["parts"][0]["text"].strip()
-        except (KeyError, IndexError):
-            raise LLMError(f"unexpected Gemini response shape: {json.dumps(data)[:200]}")
+            parts = data["candidates"][0]["content"]["parts"]
+            text = "".join(
+                part.get("text", "")
+                for part in parts
+                if isinstance(part, dict)
+            ).strip()
+            if not text:
+                raise LLMError(
+                    f"Gemini returned an empty answer: {json.dumps(data)[:500]}"
+                )
+            return text
+        except LLMError:
+            raise
+        except (KeyError, IndexError, TypeError):
+            raise LLMError(
+                f"Unexpected Gemini response shape: {json.dumps(data)[:500]}"
+            )
 
 
 class TemplateProvider(LLMProvider):

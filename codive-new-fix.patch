@@ -1,0 +1,250 @@
+--- a/codive-site/assets/app.js
++++ b/codive-site/assets/app.js
+@@ -1115,20 +1115,41 @@
+     if(bad){ parts.push(el("span","mono",c.job)); if(c.streak>1) parts.push(tag(c.streak+" in a row","del")); }
+     b.appendChild(metaLine(parts));
+   }, c.when, bad ? ()=>go({v:"pr",n:418}) : null);
+ }
+ function commitRow(c){
+-  return row("+","g-add", b=>{
++  const open = ()=>go({v:"commit",repo:c.repo,sha:c.sha});
++  const r = row("+","g-add", b=>{
+     const t = el("div","row-t");
+     t.appendChild(el("span","num mono",String(c.sha).slice(0,7)));
+     t.appendChild(document.createTextNode(c.msg));
+     b.appendChild(t);
+     const parts = [whoChip(c.author), el("span","mono",c.repo), c.when, diffNum(c.add,c.del)];
+     if(c.pr) parts.push(tag("#"+c.pr,"iris"));
+-    parts.push(tag("View diff","iris"));
++
++    // Keep the explicit action separate from the row click so it is
++    // unambiguous that this opens the real commit diff.
++    const diffLink = tag("View diff","iris");
++    diffLink.setAttribute("role","button");
++    diffLink.setAttribute("tabindex","0");
++    diffLink.setAttribute("aria-label","View diff for commit "+String(c.sha).slice(0,7));
++    diffLink.addEventListener("click", e=>{ e.preventDefault(); e.stopPropagation(); open(); });
++    diffLink.addEventListener("keydown", e=>{
++      if(e.key==="Enter" || e.key===" "){ e.preventDefault(); e.stopPropagation(); open(); }
++    });
++    parts.push(diffLink);
+     b.appendChild(metaLine(parts));
+-  }, c.when, null, ()=>go({v:"commit",repo:c.repo,sha:c.sha}));
++  }, c.when);
++  r.classList.add("commit-row");
++  r.setAttribute("role","link");
++  r.setAttribute("tabindex","0");
++  r.addEventListener("click", open);
++  r.addEventListener("keydown", e=>{
++    if(e.target !== r) return;
++    if(e.key==="Enter" || e.key===" "){ e.preventDefault(); open(); }
++  });
++  return r;
+ }
+ 
+ let commitDetailCache = new Map();
+ 
+ async function loadCommitDetail(repo, sha){
+@@ -1362,11 +1383,21 @@
+         var e3 = new Error("http_"+r.status); e3.code = r.status; e3.detail = detail; throw e3;
+       });
+     }
+     return r.json();
+   })
+-  .then(function(d){ linkifyCitations(d.answer || d.text || "(empty response)", body); log.scrollTop = log.scrollHeight; })
++  .then(function(d){
++    var answer = d && (d.answer || d.text);
++    if(typeof answer !== "string" || !answer.trim()){
++      var empty = new Error("empty_response");
++      empty.code = 502;
++      empty.detail = "The LLM provider returned an empty answer.";
++      throw empty;
++    }
++    linkifyCitations(answer, body);
++    log.scrollTop = log.scrollHeight;
++  })
+   .catch(function(err){
+     if(err && err.code === 401){ body.textContent = "Signed out - reconnect GitHub to keep asking questions."; }
+     else if(err && err.code === 429){ body.textContent = "Slow down a little - try again in a few seconds."; }
+     else if(err && err.code){ body.textContent = "Backend responded with " + err.code + ": " + (err.detail || "no further detail") + " (POST " + base + "/ask)"; }
+     else { body.textContent = "Could not reach " + base + "/ask at all - this is a network/CORS failure, not a server error. Check the backend is running and its CORS_ORIGINS includes " + location.origin + "."; }
+@@ -1435,10 +1466,20 @@
+       const b = el("button","evidence", kind==="file" ? id : kind+" "+id);
+       b.addEventListener("click",()=>{
+         if(kind==="pr" && prBy(+id)) { closeAsk(); go({v:"pr",n:+id}); }
+         else if(kind==="issue" && issueBy(+id)) { closeAsk(); go({v:"issue",n:+id}); }
+         else if(kind==="repo" && repoBy(id)) { closeAsk(); go({v:"repo",id:id}); }
++        else if(kind==="commit"){
++          const raw = id.trim();
++          const parts = raw.split("@");
++          if(parts.length === 2 && parts[0] && parts[1]){
++            closeAsk();
++            go({v:"commit",repo:parts[0],sha:parts[1]});
++          } else {
++            toast("Could not resolve commit "+id);
++          }
++        }
+         else toast("Would open "+id);
+       });
+       para.appendChild(document.createTextNode(" "));
+       para.appendChild(b);
+     } else {
+@@ -1474,10 +1515,18 @@
+   const think = el("span","thinking"); think.innerHTML = "<i></i><i></i><i></i>";
+   body.appendChild(think);
+   a.appendChild(body);
+   log.appendChild(a);
+   log.scrollTop = log.scrollHeight;
++
++  // In live mode the Codive backend is the source of truth. Do not let the
++  // optional Claude/sample integration intercept the request and return an
++  // empty answer, which used to produce "(empty response)" in the UI.
++  if(backendConfigured() && IS_LIVE){
++    backendAsk(q, body, log);
++    return;
++  }
+ 
+   const canned = CANNED[q.trim().toLowerCase()];
+   withSample(async (sample)=>{
+     askCtl = new AbortController();
+     turns.push({role:"user", content:q});
+--- a/codive-site/assets/app.css
++++ b/codive-site/assets/app.css
+@@ -218,10 +218,13 @@
+ .conf-bar i{display:block;height:100%;background:var(--iris)}
+ .evidence{display:inline-flex;align-items:center;gap:5px;font-family:"IBM Plex Mono",monospace;font-size:11.6px;
+   background:var(--iris-soft);color:var(--iris-ink);padding:1px 6px;border-radius:4px;border:none;cursor:pointer}
+ 
+ /* ---------- commit diff ---------- */
++.commit-row{cursor:pointer}
++.commit-row:hover{background:var(--raised)}
++.commit-row [role="button"]{cursor:pointer}
+ .commit-sub{margin:0 0 10px;color:var(--ink2);font-size:13.6px;line-height:1.55;max-width:78ch}
+ .commit-loading,.commit-error{margin-top:18px;color:var(--ink2)}
+ .commit-summary{margin-bottom:12px}
+ .commit-summary>div:first-child{font-size:13.5px;font-weight:500;margin-bottom:7px}
+ .commit-files{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+--- a/codive-api/app/api/routers/ask.py
++++ b/codive-api/app/api/routers/ask.py
+@@ -139,13 +139,50 @@
+         body.scope,
+         commit_repo=body.commit_repo,
+         commit_sha=body.commit_sha,
+     )
+     provider = get_llm_provider()
+-    user_prompt = f"REPOSITORY STATE (JSON):\n{json.dumps(context)[:12000]}\n\nQUESTION: {body.question.strip()}"
++
++    # Keep commit diffs intact when a user is investigating a specific commit.
++    # The old global 12k-character slice could cut the JSON in the middle of a
++    # patch, leaving the model with commit metadata but not the actual change.
++    context_json = json.dumps(context, ensure_ascii=False)
++    if len(context_json) > 30000:
++        if context.get("commit"):
++            base_context = {k: v for k, v in context.items() if k != "commit"}
++            base_json = json.dumps(base_context, ensure_ascii=False)
++            remaining = max(8000, 30000 - len(base_json) - 2000)
++            commit = dict(context["commit"])
++            files = []
++            used = 0
++            for file in commit.get("files", []):
++                patch = file.get("patch") or ""
++                budget = max(0, remaining - used)
++                if len(patch) > budget:
++                    file = dict(file)
++                    file["patch"] = patch[:budget]
++                files.append(file)
++                used += len(file.get("patch") or "")
++                if used >= remaining:
++                    break
++            commit["files"] = files
++            context = {**base_context, "commit": commit}
++            context_json = json.dumps(context, ensure_ascii=False)
++        else:
++            context_json = context_json[:30000]
++
++    user_prompt = (
++        "REPOSITORY STATE (JSON):\n"
++        + context_json
++        + "\n\nQUESTION: "
++        + body.question.strip()
++    )
+ 
+     try:
+         answer = await provider.complete(ASK_SYSTEM_PROMPT, user_prompt, max_tokens=400)
+     except LLMError as exc:
+         raise HTTPException(503, str(exc)) from exc
+ 
+-    return {"answer": answer, "provider": provider.name}
++    if not isinstance(answer, str) or not answer.strip():
++        raise HTTPException(502, f"{provider.name} returned an empty answer")
++
++    return {"answer": answer.strip(), "provider": provider.name}
+--- a/codive-api/app/services/llm.py
++++ b/codive-api/app/services/llm.py
+@@ -92,12 +92,19 @@
+                 f"Groq API error ({resp.status_code}): {message[:500]}"
+             )
+ 
+         try:
+             data = resp.json()
+-            return data["choices"][0]["message"]["content"].strip()
+-        except (KeyError, IndexError, TypeError) as exc:
++            content = data["choices"][0]["message"].get("content")
++            if not isinstance(content, str) or not content.strip():
++                raise LLMError(
++                    f"Groq returned an empty answer: {resp.text[:500]}"
++                )
++            return content.strip()
++        except LLMError:
++            raise
++        except (KeyError, IndexError, TypeError, AttributeError) as exc:
+             raise LLMError(
+                 f"Unexpected Groq response: {resp.text[:500]}"
+             ) from exc
+ 
+ 
+@@ -121,17 +128,39 @@
+                     "contents": [{"role": "user", "parts": [{"text": user}]}],
+                     "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0.3},
+                 },
+             )
+             if resp.status_code == 429:
+-                raise LLMError("gemini rate limit hit - try again shortly")
+-            resp.raise_for_status()
++                raise LLMError("Gemini rate limit hit - try again shortly")
++            if resp.status_code >= 400:
++                try:
++                    error = resp.json().get("error", {})
++                    message = error.get("message", resp.text)
++                except Exception:
++                    message = resp.text
++                raise LLMError(
++                    f"Gemini API error ({resp.status_code}): {message[:500]}"
++                )
+             data = resp.json()
+         try:
+-            return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+-        except (KeyError, IndexError):
+-            raise LLMError(f"unexpected Gemini response shape: {json.dumps(data)[:200]}")
++            parts = data["candidates"][0]["content"]["parts"]
++            text = "".join(
++                part.get("text", "")
++                for part in parts
++                if isinstance(part, dict)
++            ).strip()
++            if not text:
++                raise LLMError(
++                    f"Gemini returned an empty answer: {json.dumps(data)[:500]}"
++                )
++            return text
++        except LLMError:
++            raise
++        except (KeyError, IndexError, TypeError):
++            raise LLMError(
++                f"Unexpected Gemini response shape: {json.dumps(data)[:500]}"
++            )
+ 
+ 
+ class TemplateProvider(LLMProvider):
+     """No model. Used with no LLM key configured. Callers pass the same
+     system/user prompt text as the other providers, so this doesn't try to

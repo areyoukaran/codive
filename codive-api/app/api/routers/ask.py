@@ -7,11 +7,12 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_user_token
 from app.core.config import get_settings
 from app.core.rate_limit import get_limiter
 from app.db.base import get_db
 from app.db.models import Commit, Issue, PullRequest, Repository, User, WorkflowRun
+from app.services.github_client import GitHubClient, GitHubAPIError
 from app.services.llm import ASK_SYSTEM_PROMPT, LLMError, get_llm_provider
 
 router = APIRouter(tags=["ask"])
@@ -21,12 +22,22 @@ class AskRequest(BaseModel):
     question: str
     scope: str | None = "all"
     view: dict | None = None
+    commit_repo: str | None = None
+    commit_sha: str | None = None
 
 
-async def _build_context(user: User, db: AsyncSession, scope: str | None) -> dict:
+async def _build_context(
+    user: User,
+    db: AsyncSession,
+    scope: str | None,
+    *,
+    commit_repo: str | None = None,
+    commit_sha: str | None = None,
+) -> dict:
     repo_q = select(Repository).where(Repository.owner_user_id == user.id, Repository.is_watched.is_(True))
-    if scope and scope != "all":
-        repo_q = repo_q.where(Repository.full_name == scope)
+    effective_scope = commit_repo or scope
+    if effective_scope and effective_scope != "all":
+        repo_q = repo_q.where(Repository.full_name == effective_scope)
     repos = list(await db.scalars(repo_q))
     ids = [r.id for r in repos]
     if not ids:
@@ -49,7 +60,7 @@ async def _build_context(user: User, db: AsyncSession, scope: str | None) -> dic
         .where(WorkflowRun.repo_id.in_(ids)).order_by(WorkflowRun.started_at.desc()).limit(10)
     )).all()
 
-    return {
+    context = {
         "repositories": [{"full_name": r.full_name, "language": r.language, "ci": None, "description": r.description} for r in repos],
         "pull_requests": [
             {"repo": name, "number": p.number, "title": p.title, "author": p.author_login, "state": "merged" if p.is_merged else p.state,
@@ -72,6 +83,42 @@ async def _build_context(user: User, db: AsyncSession, scope: str | None) -> dic
         ],
     }
 
+    if commit_repo and commit_sha:
+        repository = next((r for r in repos if r.full_name == commit_repo), None)
+        if repository is not None:
+            try:
+                token = await get_user_token(user, db)
+                owner, name = commit_repo.split("/", 1)
+                async with GitHubClient(token) as gh:
+                    detail = await gh.commit_detail(owner, name, commit_sha)
+                context["commit"] = {
+                    "repo": commit_repo,
+                    "sha": detail.get("sha"),
+                    "message": detail.get("message"),
+                    "stats": detail.get("stats"),
+                    "files": [
+                        {
+                            "path": f.get("filename"),
+                            "status": f.get("status"),
+                            "additions": f.get("additions", 0),
+                            "deletions": f.get("deletions", 0),
+                            "patch": (f.get("patch") or "")[:12000],
+                        }
+                        for f in detail.get("files", [])[:40]
+                    ],
+                }
+            except (GitHubAPIError, ValueError):
+                # The normal repository context remains usable even if the
+                # live patch cannot be fetched. The commit page reports the
+                # fetch error separately.
+                context["commit"] = {
+                    "repo": commit_repo,
+                    "sha": commit_sha,
+                    "diff_unavailable": True,
+                }
+
+    return context
+
 
 @router.post("/ask")
 async def ask(body: AskRequest, request: Request, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -86,13 +133,56 @@ async def ask(body: AskRequest, request: Request, user: User = Depends(get_curre
     if not body.question or not body.question.strip():
         raise HTTPException(400, "question is required")
 
-    context = await _build_context(user, db, body.scope)
+    context = await _build_context(
+        user,
+        db,
+        body.scope,
+        commit_repo=body.commit_repo,
+        commit_sha=body.commit_sha,
+    )
     provider = get_llm_provider()
-    user_prompt = f"REPOSITORY STATE (JSON):\n{json.dumps(context)[:12000]}\n\nQUESTION: {body.question.strip()}"
+
+    # Keep commit diffs intact when a user is investigating a specific commit.
+    # The old global 12k-character slice could cut the JSON in the middle of a
+    # patch, leaving the model with commit metadata but not the actual change.
+    context_json = json.dumps(context, ensure_ascii=False)
+    if len(context_json) > 30000:
+        if context.get("commit"):
+            base_context = {k: v for k, v in context.items() if k != "commit"}
+            base_json = json.dumps(base_context, ensure_ascii=False)
+            remaining = max(8000, 30000 - len(base_json) - 2000)
+            commit = dict(context["commit"])
+            files = []
+            used = 0
+            for file in commit.get("files", []):
+                patch = file.get("patch") or ""
+                budget = max(0, remaining - used)
+                if len(patch) > budget:
+                    file = dict(file)
+                    file["patch"] = patch[:budget]
+                files.append(file)
+                used += len(file.get("patch") or "")
+                if used >= remaining:
+                    break
+            commit["files"] = files
+            context = {**base_context, "commit": commit}
+            context_json = json.dumps(context, ensure_ascii=False)
+        else:
+            context_json = context_json[:30000]
+
+    user_prompt = (
+        "REPOSITORY STATE (JSON):\n"
+        + context_json
+        + "\n\nQUESTION: "
+        + body.question.strip()
+    )
 
     try:
         answer = await provider.complete(ASK_SYSTEM_PROMPT, user_prompt, max_tokens=400)
     except LLMError as exc:
         raise HTTPException(503, str(exc)) from exc
 
-    return {"answer": answer, "provider": provider.name}
+    if not isinstance(answer, str) or not answer.strip():
+        raise HTTPException(502, f"{provider.name} returned an empty answer")
+
+    return {"answer": answer.strip(), "provider": provider.name}
