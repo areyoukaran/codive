@@ -1,0 +1,46 @@
+# Render Blueprint. On render.com: New -> Blueprint -> point at this repo,
+# and Render reads this file and creates the service below. Free plan,
+# no card required for the service itself (Neon/Upstash/Groq are separate
+# free accounts you create yourself — see README.md).
+#
+# Secrets are intentionally NOT listed with sync:false values here beyond
+# a placeholder — Render will prompt you to fill each one in in the
+# dashboard before the first deploy.
+services:
+  - type: web
+    name: codive-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: ENV
+        value: production
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: PORT
+        value: "8000"
+      - key: DATABASE_URL
+        sync: false        # paste your Neon connection string
+      - key: REDIS_URL
+        sync: false        # paste your Upstash connection string (optional)
+      - key: SECRET_KEY
+        generateValue: true
+      - key: TOKEN_ENCRYPTION_KEY
+        sync: false        # output of `python3 scripts/gen-keys.py`
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false        # optional
+      - key: GEMINI_API_KEY
+        sync: false        # optional
+      - key: FRONTEND_URL
+        sync: false        # e.g. https://your-username.github.io/codive-site
+      - key: BACKEND_URL
+        sync: false        # e.g. https://codive-api.onrender.com (fill in after first deploy)
+      - key: CORS_ORIGINS
+        sync: false        # same as FRONTEND_URL, comma-separated if more than one

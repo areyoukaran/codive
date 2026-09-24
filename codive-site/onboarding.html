@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Codive — set up</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body class="site onb">
+
+<header class="sitebar">
+  <div class="wrap sitebar-in">
+    <a class="logo" href="index.html">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M1 12.5h4.2l2.3-6.8 3.6 13.6 3-9.4 1.9 2.6H23" stroke="var(--iris)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Codive
+    </a>
+    <div class="actions"><a class="btn" href="index.html">Cancel</a></div>
+  </div>
+</header>
+
+<main class="onb-main">
+  <div class="onb-card">
+    <div class="rail" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
+
+    <!-- 1 — authorize -->
+    <section class="onb-step on" data-step="0">
+      <h1 class="onb-h">Connect your GitHub account</h1>
+      <p class="onb-p">Codive asks for read access to repository contents, metadata, pull requests, issues and workflow runs. It cannot push, comment or open anything on your behalf.</p>
+      <div class="pick">
+        <label style="cursor:default"><span class="mono" style="color:var(--add)">✓</span><div><div class="nm">Read repository contents</div><div class="ds">Files, README, configuration and dependency manifests, for indexing and search.</div></div></label>
+        <label style="cursor:default"><span class="mono" style="color:var(--add)">✓</span><div><div class="nm">Read pull requests, issues and reviews</div><div class="ds">Titles, bodies, comments, labels, timelines and review state.</div></div></label>
+        <label style="cursor:default"><span class="mono" style="color:var(--add)">✓</span><div><div class="nm">Read checks and workflow runs</div><div class="ds">So a failing build reaches your brief before someone messages you about it.</div></div></label>
+        <label style="cursor:default"><span class="mono" style="color:var(--ink3)">—</span><div><div class="nm">No write access of any kind</div><div class="ds">Not requested, so it cannot be granted by accident.</div></div></label>
+      </div>
+      <div class="onb-actions">
+        <button class="btn primary lg" data-next>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 00-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.94.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 015 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0012 2z"/></svg>
+          Authorize on GitHub
+        </button>
+        <span class="muted">Takes you to github.com</span>
+      </div>
+    </section>
+
+    <!-- 2 — repositories -->
+    <section class="onb-step" data-step="1">
+      <h1 class="onb-h">Which repositories do you actually watch?</h1>
+      <p class="onb-p">Pick the ones you open most days. Fewer repositories make a sharper brief, and you can add more later without reauthorizing.</p>
+      <div class="pick" id="repoPick"></div>
+      <div class="onb-actions">
+        <button class="btn" data-back>Back</button>
+        <button class="btn primary" data-next id="repoNext">Continue</button>
+        <span class="muted" id="repoCount">4 selected</span>
+      </div>
+    </section>
+
+    <!-- 3 — preferences -->
+    <section class="onb-step" data-step="2">
+      <h1 class="onb-h">How deep should the first scan go?</h1>
+      <p class="onb-p">History can be backfilled later. Starting shallow means your first brief arrives in minutes rather than an hour.</p>
+      <label class="opt"><input type="radio" name="depth" value="90" checked><div><div class="nm">Last 90 days</div><div class="ds">Recommended. Enough history for trends, ageing and a useful brief tomorrow morning.</div></div></label>
+      <label class="opt"><input type="radio" name="depth" value="365"><div><div class="nm">Last 12 months</div><div class="ds">Better change-impact analysis. The first sync takes noticeably longer on busy repositories.</div></div></label>
+      <label class="opt"><input type="radio" name="depth" value="all"><div><div class="nm">Everything</div><div class="ds">Full history. On a repository past ten thousand commits, expect this to run for a while.</div></div></label>
+      <div style="height:14px"></div>
+      <label class="opt"><input type="checkbox" checked><div><div class="nm">Index source code for search and questions</div><div class="ds">Chunks files and stores embeddings with their paths. Turn this off and Codive can still read activity, but not answer questions about the code.</div></div></label>
+      <label class="opt"><input type="checkbox" checked><div><div class="nm">Send me the daily brief</div><div class="ds">In-app to start. Slack and email can be added from settings later.</div></div></label>
+      <div class="onb-actions">
+        <button class="btn" data-back>Back</button>
+        <button class="btn primary" data-next>Start the first sync</button>
+      </div>
+    </section>
+
+    <!-- 4 — syncing -->
+    <section class="onb-step" data-step="3">
+      <h1 class="onb-h">Building your repository intelligence</h1>
+      <p class="onb-p" id="syncLine">Pulling activity from GitHub. You can leave this page open or come back later — the sync runs in the background.</p>
+      <div class="sync-list" id="syncList"></div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="onb-actions">
+        <button class="btn primary" id="toApp" disabled>Open your dashboard</button>
+        <span class="muted" id="syncPct">0%</span>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="assets/config.js"></script>
+<script>
+(function(){
+  var LIVE = !!(window.CODIVE && window.CODIVE.apiBase);
+  var API = LIVE ? window.CODIVE.apiBase.replace(/\/$/,"") : "";
+  var CONNECTED = new URLSearchParams(location.search).get("connected") === "1";
+
+  var DEMO_REPOS = [
+    {id:"atlas/api",     lang:"Python",     desc:"FastAPI service behind the Atlas dashboard — auth, sync and the public API.", meta:"1,842 commits · 23 issues"},
+    {id:"atlas/web",     lang:"TypeScript", desc:"React front end. Talks to atlas/api over the v2 API.",                        meta:"967 commits · 11 issues"},
+    {id:"atlas/workers", lang:"Python",     desc:"Background sync, indexing and embedding jobs. Celery + Redis.",               meta:"412 commits · 8 issues"},
+    {id:"atlas/infra",   lang:"HCL",        desc:"Terraform for staging and production. RDS, ElastiCache, ECS.",                meta:"188 commits · 4 issues"},
+    {id:"atlas/docs",    lang:"MDX",        desc:"Public documentation site. Rarely changes.",                                   meta:"96 commits · 1 issue", off:true},
+    {id:"atlas/sdk-js",  lang:"TypeScript", desc:"Generated client. Updated by CI, not by hand.",                                meta:"304 commits · 0 issues", off:true}
+  ];
+
+  var step = 0, steps = document.querySelectorAll(".onb-step"), rail = document.querySelectorAll(".rail i");
+  var pick = document.getElementById("repoPick");
+
+  function show(n){
+    step = Math.max(0, Math.min(steps.length - 1, n));
+    steps.forEach(function(s, i){ s.classList.toggle("on", i === step); });
+    rail.forEach(function(r, i){ r.classList.toggle("on", i <= step); });
+    window.scrollTo({top:0, behavior:"instant"});
+    if(step === 3) runSync();
+  }
+
+  function selected(){
+    return Array.prototype.slice.call(pick.querySelectorAll("input:checked")).map(function(i){ return i.value; });
+  }
+  function refreshCount(){
+    var n = selected().length;
+    document.getElementById("repoCount").textContent = n + " selected";
+    document.getElementById("repoNext").disabled = n === 0;
+  }
+
+  function renderPick(list){
+    pick.innerHTML = "";
+    list.forEach(function(r){
+      var l = document.createElement("label");
+      var cb = document.createElement("input");
+      cb.type = "checkbox"; cb.value = r.id; cb.checked = !r.off;
+      var mid = document.createElement("div");
+      mid.style.minWidth = "0";
+      var nm = document.createElement("div"); nm.className = "nm"; nm.textContent = r.id;
+      var ds = document.createElement("div"); ds.className = "ds"; ds.textContent = r.desc;
+      mid.appendChild(nm); mid.appendChild(ds);
+      var rt = document.createElement("div"); rt.className = "rt";
+      var lang = document.createElement("div"); lang.className = "ds mono"; lang.textContent = r.lang;
+      var meta = document.createElement("div"); meta.className = "ds"; meta.style.color = "var(--ink3)"; meta.textContent = r.meta;
+      rt.appendChild(lang); rt.appendChild(meta);
+      l.appendChild(cb); l.appendChild(mid); l.appendChild(rt);
+      pick.appendChild(l);
+    });
+    pick.addEventListener("change", refreshCount);
+    refreshCount();
+  }
+
+  function pickError(message){
+    pick.innerHTML = '<div class="empty"><b>Could not load your repositories</b><span>' + message + '</span></div>';
+    document.getElementById("repoNext").disabled = true;
+  }
+
+  async function loadAvailableRepos(){
+    pick.innerHTML = '<div class="empty"><b>Loading your repositories…</b><span>Asking GitHub what you have access to.</span></div>';
+    try{
+      var resp = await fetch(API + "/repos/available", {credentials:"include"});
+      if(resp.status === 401){ pickError("Your session expired — go back and reconnect GitHub."); return; }
+      if(!resp.ok) throw new Error("http_" + resp.status);
+      var repos = await resp.json();
+      if(!repos.length){ pickError("GitHub returned no repositories for this account."); return; }
+      renderPick(repos.map(function(r, i){
+        return {
+          id: r.full_name, lang: r.language || "—",
+          desc: r.description || "No description.",
+          meta: (r.private ? "private" : "public") + " · " + (r.stars||0) + " stars",
+          off: i >= 6,  // pre-select the first few rather than everything, same spirit as the demo list
+        };
+      }));
+    }catch(e){
+      pickError("Could not reach the backend at " + API + ". Check that it's running and CORS allows this origin.");
+    }
+  }
+
+  document.querySelectorAll("[data-back]").forEach(function(b){ b.addEventListener("click", function(){ show(step - 1); }); });
+
+  if(!LIVE){
+    // ---- demo mode: unchanged from before ----
+    renderPick(DEMO_REPOS);
+    document.querySelectorAll("[data-next]").forEach(function(b){ b.addEventListener("click", function(){ show(step + 1); }); });
+  } else {
+    // ---- live mode ----
+    document.querySelector('[data-step="0"] .onb-actions .muted').textContent = "Opens github.com";
+    var authBtn = document.querySelector('[data-step="0"] [data-next]');
+    authBtn.addEventListener("click", function(e){
+      e.preventDefault();
+      location.href = API + "/auth/github/login";
+    });
+
+    var depthHeading = document.querySelector('[data-step="2"] .onb-h');
+    var depthSub = document.querySelector('[data-step="2"] .onb-p');
+    if(depthHeading) depthHeading.textContent = "Ready to sync";
+    if(depthSub) depthSub.textContent = "The first sync covers recent commits, open pull requests and issues, and README/docs for search. Deeper history and per-repo tuning are on the roadmap — see the backend README.";
+
+    var startBtn = document.querySelector('[data-step="2"] [data-next]');
+    var repoNext = document.getElementById("repoNext");
+    var repoErr = null;
+
+    repoNext.addEventListener("click", async function(e){
+      e.preventDefault();
+      var chosen = selected();
+      repoNext.disabled = true;
+      var prevLabel = repoNext.textContent;
+      repoNext.textContent = "Saving…";
+      try{
+        var resp = await fetch(API + "/repos/select", {
+          method: "POST", credentials: "include",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({full_names: chosen}),
+        });
+        if(!resp.ok){
+          var body = await resp.json().catch(function(){ return {}; });
+          throw new Error(body.detail || ("http_" + resp.status));
+        }
+        show(step + 1);
+      }catch(err){
+        document.getElementById("repoCount").textContent = String(err.message || err);
+        document.getElementById("repoCount").style.color = "var(--del)";
+      }finally{
+        repoNext.disabled = false;
+        repoNext.textContent = prevLabel;
+      }
+    });
+
+    startBtn.addEventListener("click", async function(e){
+      e.preventDefault();
+      startBtn.disabled = true;
+      try{
+        await fetch(API + "/sync/start", {method: "POST", credentials: "include"});
+      }catch(e2){ /* sync/status polling below will surface the failure either way */ }
+      show(step + 1);
+    });
+
+    if(CONNECTED){
+      show(1);
+      loadAvailableRepos();
+    }
+  }
+
+  // ---- step 3: syncing ----
+  var ran = false;
+  function runSync(){
+    if(ran) return; ran = true;
+    if(LIVE){ runLiveSync(); } else { runDemoSync(); }
+  }
+
+  async function runLiveSync(){
+    var list = document.getElementById("syncList");
+    list.innerHTML = '<div class="sync-item"><span class="tick">○</span><span class="mono">connecting</span><span class="st">reaching your backend</span></div>';
+    var tries = 0;
+    var poll = async function(){
+      tries++;
+      try{
+        var resp = await fetch(API + "/sync/status", {credentials:"include"});
+        if(!resp.ok) throw new Error("http_" + resp.status);
+        var data = await resp.json();
+        renderLiveSync(data.repositories || []);
+        if(data.complete){ finish(); return; }
+      }catch(e){
+        if(tries > 3){
+          document.getElementById("syncLine").textContent = "Could not reach " + API + "/sync/status. The sync may still be running on the backend — try opening the dashboard, or check the server logs.";
+          document.getElementById("toApp").disabled = false;
+          return;
+        }
+      }
+      setTimeout(poll, 1500);
+    };
+    poll();
+  }
+
+  function renderLiveSync(repos){
+    var list = document.getElementById("syncList");
+    list.innerHTML = "";
+    var done = 0;
+    repos.forEach(function(r){
+      var isDone = r.status === "done" || r.status === "error";
+      if(isDone) done++;
+      var d = document.createElement("div");
+      d.className = "sync-item" + (isDone ? " done" : "");
+      var tick = r.status === "error" ? "×" : (isDone ? "✓" : "○");
+      var stage = r.status === "error" ? (r.error || "sync failed") : (r.stage || r.status);
+      d.innerHTML = '<span class="tick">' + tick + '</span><span class="mono">' + r.repo + '</span><span class="st">' + stage + '</span>';
+      list.appendChild(d);
+    });
+    var pct = repos.length ? Math.round(done / repos.length * 100) : 0;
+    document.getElementById("bar").style.width = pct + "%";
+    document.getElementById("syncPct").textContent = pct + "%";
+  }
+
+  function runDemoSync(){
+    var chosen = selected();
+    var list = document.getElementById("syncList");
+    var stages = ["commits & branches", "pull requests & reviews", "issues & comments", "releases & workflow runs", "indexing files"];
+    chosen.forEach(function(id){
+      var d = document.createElement("div");
+      d.className = "sync-item";
+      d.innerHTML = '<span class="tick">○</span><span class="mono">' + id + '</span><span class="st">queued</span>';
+      list.appendChild(d);
+    });
+    var items = list.querySelectorAll(".sync-item");
+    var total = items.length * stages.length, done = 0;
+
+    items.forEach(function(item, idx){
+      stages.forEach(function(stage, s){
+        setTimeout(function(){
+          item.querySelector(".st").textContent = stage;
+          done++;
+          var pct = Math.round(done / total * 100);
+          document.getElementById("bar").style.width = pct + "%";
+          document.getElementById("syncPct").textContent = pct + "%";
+          if(s === stages.length - 1){
+            item.classList.add("done");
+            item.querySelector(".tick").textContent = "✓";
+            item.querySelector(".st").textContent = "synced";
+          }
+          if(done === total) finish(chosen);
+        }, 380 + idx * 260 + s * 430);
+      });
+    });
+  }
+
+  function finish(chosen){
+    document.getElementById("syncLine").textContent =
+      "Done. Codive has enough to write your first brief — it will get sharper once a few days of activity accumulate.";
+    var b = document.getElementById("toApp");
+    b.disabled = false;
+    b.focus();
+    b.addEventListener("click", function(){
+      location.href = LIVE ? "app.html" : ("app.html?repos=" + encodeURIComponent((chosen||[]).join(",")));
+    });
+  }
+})();
+</script>
+</body>
+</html>

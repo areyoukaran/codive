@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Codive — Overview</title>
+<meta name="description" content="Repository intelligence: what changed, what needs attention, what to do next.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M1 12.5h4.2l2.3-6.8 3.6 13.6 3-9.4 1.9 2.6H23" stroke="var(--iris)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="brand-name">Codive</span>
+    </div>
+    <div class="scope">
+      <div class="scope-label">Watching</div>
+      <div class="scope-val">
+        <select id="scope" aria-label="Repository scope">
+          <option value="all">all repositories</option>
+        </select>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+    <nav class="nav" id="nav" aria-label="Sections"></nav>
+    <div class="side-foot">
+      <div class="who">
+        <div class="avatar">RK</div>
+        <div class="who-name">rkulkarni</div>
+      </div>
+      <button class="icon-btn" id="themeBtn" title="Switch theme" aria-label="Switch theme">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="sync">
+        <span class="dot" id="syncDot"></span>
+        <span id="syncText">4 repositories · synced 2 minutes ago</span>
+      </div>
+      <button class="searchbtn" id="searchBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="lbl">Search everything</span><span class="kbd">⌘K</span>
+      </button>
+      <button class="btn primary" id="askBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 01-9 8.4L3 21l1.1-3.4A8.4 8.4 0 1121 11.5z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>
+        Ask Codive
+      </button>
+    </header>
+    <main class="page" id="page" tabindex="-1"></main>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<aside class="ask" id="ask" aria-label="Ask Codive" aria-hidden="true">
+  <div class="ask-h">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M1 12.5h4.2l2.3-6.8 3.6 13.6 3-9.4 1.9 2.6H23" stroke="var(--iris)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h2>Ask Codive</h2>
+    <button class="icon-btn" id="askNew" title="New conversation" aria-label="New conversation" style="margin-left:auto">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <button class="icon-btn" id="askClose" title="Close" aria-label="Close">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="ask-ctx"><span class="ask-ctx-l">Context</span><span id="askCtx"></span></div>
+  <div class="ask-log" id="askLog"></div>
+  <div class="ask-f">
+    <div class="ask-box">
+      <textarea id="askIn" rows="1" placeholder="Ask about commits, PRs, issues or code…"></textarea>
+      <button class="btn sm primary" id="askSend" aria-label="Send">Send</button>
+    </div>
+    <div class="ask-note" id="askNote">Answers cite the commit, PR, issue or file they came from.</div>
+  </div>
+</aside>
+
+<div class="cmdk" id="cmdk" role="dialog" aria-label="Search">
+  <div class="cmdk-box">
+    <div class="cmdk-in">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="color:var(--ink3)"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="cmdkIn" placeholder="Repositories, pull requests, issues, commits, files…" autocomplete="off" spellcheck="false">
+      <div class="cmdk-mode" role="group" aria-label="Search mode">
+        <button data-mode="exact" aria-pressed="true">Exact</button>
+        <button data-mode="semantic" aria-pressed="false">Semantic</button>
+      </div>
+    </div>
+    <div class="cmdk-list" id="cmdkList"></div>
+    <div class="cmdk-f"><span>↑↓ to move</span><span>↵ to open</span><span>esc to close</span></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

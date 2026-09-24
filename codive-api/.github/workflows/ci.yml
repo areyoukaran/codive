@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: codive
+          POSTGRES_PASSWORD: codive
+          POSTGRES_DB: codive_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U codive"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check app tests
+
+      - name: Run tests
+        env:
+          ENV: test
+          SECRET_KEY: test-secret-key-not-for-production
+          TOKEN_ENCRYPTION_KEY: dGVzdC1lbmNyeXB0aW9uLWtleS1mb3ItY2ktb25seS0h
+          DATABASE_URL: postgresql+asyncpg://codive:codive@localhost:5432/codive_test
+          GITHUB_CLIENT_ID: test-client-id
+          GITHUB_CLIENT_SECRET: test-client-secret
+          GITHUB_WEBHOOK_SECRET: test-webhook-secret
+          ENABLE_SCHEDULER: "false"
+        run: pytest -v --tb=short
+
+      - name: Verify Docker image builds
+        run: docker build -t codive-api:ci .
